@@ -39,6 +39,12 @@ from introspection_lib.base_exceptions import UT_Exception_Check, UT_Exception
 
 class ProgressBarIndicator:
     """
+    Command line progress bar indicator with optional {done}/{total} counter
+    and percents output. This implementation is re-usable, i.e. the same
+    instance of this class can be used multiple times to show the progress of
+    the different tasks. A new visual representation is created each time the
+    method start() is called, and it is finilized by calling method stop().
+
     Attributes:
         Range: (read-only property) int > 0 ; the maximum value of the internal
             counter, representing the 100%
@@ -74,6 +80,10 @@ class ProgressBarIndicator:
     def __init__(self, Range: int, *, Value: int = 0, ShowCounter: bool = True,
                             ShowPercents: bool = True, Width: int = 80) -> None:
         """
+        Initialization. Sets the intial values of the counter, max range and
+        the width of the widget. The visual representation will not be printed
+        out until the method start() is called.
+
         Signature:
             int > 0 /,*, int >= 0, bool, bool, int > 0/ -> None
         
