@@ -71,6 +71,8 @@ class ProgressBarIndicator:
             int >= 0 -> None
         setWidth(Width):
             int > 0 -> None
+        getStringValue():
+            None -> str
     
     Version 1.0.0.0
     """
