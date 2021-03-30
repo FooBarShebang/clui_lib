@@ -11,7 +11,7 @@ Packages:
 
 """
 
-__project__ ='Command Line User Interface'
+__project__ ='Command Line User Interface Tools'
 __version_info__= (0, 1, 1)
 __version_suffix__= '-dev1'
 __version__= ''.join(['.'.join(map(str, __version_info__)), __version_suffix__])
