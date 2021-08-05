@@ -1,6 +1,6 @@
 #usr/bin/python3
 
-from typing import Any
+from typing import Any, Sequence
 
 from threading import Lock
 
@@ -47,11 +47,11 @@ ASCII_CONTROL_CODES = {
 
 class ControlCode:
     
-    def __init__(self, Name: str, Keys: str = 'Undefined'):
+    def __init__(self, Name: str, Keys: Sequence[str] = ['']):
         """
         """
         self._strName = Name
-        self._strKeys = Keys
+        self._strseqKeys = Keys
     
     @property
     def Name(self):
@@ -63,7 +63,7 @@ class ControlCode:
     def Keys(self):
         """
         """
-        return self._strKeys
+        return self._strseqKeys
 
 class InputBuffer:
     """
