@@ -1,6 +1,35 @@
 #usr/bin/python3
 """
+Module clui_lib.console.keystroke_posix
+
+POSIX-compatible implementation of the keyboard presses events based on the
+processing of the content of the stdin via tty and termios Standard Libraries
+functionality.
+
+Based upon the ideas from
+    * https://stackoverflow.com/questions/2408560/
+    * https://stackoverflow.com/questions/21791621/
+    * https://stackoverflow.com/questions/18018033/
+    * https://stackoverflow.com/questions/292095/
+    * https://github.com/magmax/python-readchar => 
+        Danny Yo & Stephen Chappell (http://code.activestate.com/recipes/134892)
+
+Functions:
+    SplitCharacters(Data)
+        str -> list(str OR clui_lib.console.keystroke_abc.ControlCode)
+    ParseEscapeSequence
+        str -> list(str OR clui_lib.console.keystroke_abc.ControlCode)
+    StdinListener(Buffer)
+        clui_lib.console.keystroke_abc.InputBuffer -> None
+    KeystrokesListener(Buffer, Delay)
+        clui_lib.console.keystroke_abc.InputBuffer -> None
+    KeyboardListener(*, Delay = DEF_DELAY, StopKey = 'q')
+        /*, float/, str// -> None
 """
+
+__version__= '1.0.0.0'
+__date__ = '06-08-2021'
+__status__ = 'Testing'
 
 #imports
 
@@ -32,17 +61,20 @@ ROOT_FOLDER = os.path.dirname(LIB_FOLDER)
 if not (ROOT_FOLDER in sys.path):
     sys.path.append(ROOT_FOLDER)
 
-from clui_lib.console.keystroke_abc import InputBuffer, ControlCode
-from clui_lib.console.keystroke_abc import ASCII_CONTROL_CODES
+from clui_lib.console.keystroke_common import InputBuffer, ControlCode
+from clui_lib.console.keystroke_common import ASCII_CONTROL_CODES
 
 #globals
 
+#+ supported terminal types
+
+XTERM_NEW = [b'xterm-new', b'xterm-256color']
 
 #check terminal type
 
 TerminalType = subprocess.check_output('echo $TERM', shell = True)[:-1]
 
-if TerminalType in [b'xterm-new', b'xterm-256color']:
+if TerminalType in XTERM_NEW:
     from clui_lib.console.xterm_new_mapping import ASCII_CONTROL_MAPPING
     from clui_lib.console.xterm_new_mapping import CSI_MAPPING
 else:
@@ -58,8 +90,26 @@ DEF_DELAY = 0.0001 #100 us - distinction between 2+ keystrokes and an escape
 
 def SplitCharacters(Data: str) -> List[Union[str, ControlCode]]:
     """
+    Splits the input string, which may containg multiple Unicode printable
+    characters and / or unprintable character (control codes), into a list of
+    1-character strings and instances of ControlCode class.
+
     Signature:
-        str -> list(str OR ControlCode)
+        str -> list(str OR clui_lib.console.keystroke_abc.ControlCode)
+    
+    Args:
+        Data: str; the Unicode string input containg one or more Unicode
+            characters (printable or non-printable, as control codes), but no
+            CSI sequences
+    
+    Returns:
+        list(str OR ControlCode); the simultaneous multple keys being pressed
+            split into separate key-presses, whilst the Ctrl presses generating
+            a control command are stil grouped with a key, which they modified,
+            e.g. 'Ctrl-p', which is represented by a corresponding instance of
+            ControlCode class
+    
+    Version 1.0.0.0
     """
     Result = []
     for Char in Data:
@@ -72,8 +122,28 @@ def SplitCharacters(Data: str) -> List[Union[str, ControlCode]]:
 
 def ParseEscapeSequence(Data: bytes) -> List[Union[str, ControlCode]]:
     """
+    Splits the passed bytestring into a sequence of proper printable Unicode
+    characters, 1-byte control codes and multiple bytes CSI escape sequences
+    assuming UTF-8 codec. The printable Unicode characters are returned as
+    1-element strings, the 1-bye control codes - as instances of the ControlCode
+    class, and the CSI escape sequences - as strings reflecting the actual keys
+    being pressed, e.g. 'Ctrl-Alt-p'.
+
     Signature:
-        bytes -> list(str OR ControlCode)
+        bytes -> list(str OR clui_lib.console.keystroke_abc.ControlCode)
+    
+    Args:
+        Data: bytes; the UTF-8 encoded input containg one or more Unicode
+            characters (printable or non-printable, as control codes) and / or
+            CSI sequences
+    
+    Returns:
+        list(str OR ControlCode); the simultaneous multple keys being pressed
+            split into separate key-presses, whilst the Ctrl, Alt and Shift
+            presses are stil grouped with a key, which they modified, e.g.
+            'Ctrl-Alt-p'
+    
+    Version 1.0.0.0
     """
     Result = []
     EscapedBuffer = []
@@ -113,7 +183,7 @@ def ParseEscapeSequence(Data: bytes) -> List[Union[str, ControlCode]]:
             Result.append(ControlCode('ESC', ASCII_CONTROL_MAPPING['ESC']))
     return Result
 
-#+ main function to be executed in the separate threads
+#+ main functions to be executed in the separate threads
 
 def StdinListener(Buffer: InputBuffer) -> None:
     """
@@ -124,19 +194,18 @@ def StdinListener(Buffer: InputBuffer) -> None:
     the buffer is deactivated and one more character is read-out from the stdin.
     
     Signature:
-        InputBuffer -> None
+        clui_lib.console.keystroke_abc.InputBuffer -> None
     
     Args:
-        Buffer: clui_lib.console.keystroke_abc.InputBuffer; a queue-like
-            object serving as the data exchange buffer as well as to signal
-            the function to terminate
+        Buffer: InputBuffer; a queue-like object serving as the data exchange
+            buffer as well as to signal the function to terminate
     
     Version 1.0.0.0
     """
     original_settings = termios.tcgetattr(sys.stdin)
     
     try:
-        tty.setcbreak(sys.stdin) #set terminal in the 'raw' input state
+        tty.setcbreak(sys.stdin) #set terminal in the 'cbreak' input state
         buffer_string = ''
         while Buffer.IsActive:
             buffer_string = sys.stdin.read(1)
@@ -168,12 +237,11 @@ def KeystrokesListener(Buffer: InputBuffer, Delay: float) -> None:
     read-out from the stdin.
     
     Signature:
-        InputBuffer -> None
+        clui_lib.console.keystroke_abc.InputBuffer -> None
     
     Args:
-        Buffer: clui_lib.console.keystroke_abc.InputBuffer; a queue-like
-            object serving as the data exchange output buffer as well as to
-            signal the function to terminate
+        Buffer: InputBuffer; a queue-like object serving as the data exchange
+            output buffer as well as to signal the function to terminate
         Delay: float; frequency of the pulling the input buffer in seconds
     
     Version 1.0.0.0
@@ -212,10 +280,21 @@ def KeystrokesListener(Buffer: InputBuffer, Delay: float) -> None:
 def KeyboardListener(*, Delay: float = DEF_DELAY, StopKey: str = 'q') -> None:
     """
     This function serves only for the demonstration and self-testing purposes.
-    It illustrates how the keystrokes listener function can be used.
+    It illustrates how the keystrokes listener function can be used by
+    implementing a simple indefinite events processing loop with the conditional
+    termination upon pressing a specific key.
     
+    Signature:
+        /*, float/, str// -> None
+
     Args:
-        
+        Delay: (keyword) float; delay in seconds between the successive pulls
+            from the key-presses buffer, defaults to the global varaible
+            DEF_DELAY
+        StopKey: (keyword) str; key or a combination of keys (Ctrl, Alt, Shift
+            + another key) signaling to exit the loop
+    
+    Version 1.0.0.0
     """
     print('starting the listening process, press "{}" to exit'.format(StopKey))
     Buffer = InputBuffer()
@@ -236,6 +315,8 @@ def KeyboardListener(*, Delay: float = DEF_DELAY, StopKey: str = 'q') -> None:
     Buffer.empty()
     Listener.join()
     print('bye!')
+
+#testing and demonstration area - execution entry point
 
 if __name__ == '__main__':
     KeyboardListener()

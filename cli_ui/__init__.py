@@ -10,18 +10,10 @@ Modules:
     base_view_classes: simple widgets to show dynamic data in CLI
     line_widgets: compound widgets fitting one line in CLI, e.g. Progress Bar
         Indicator, etc.
-
 """
 
-__project__ ='Command Line User Interface'
-__version_info__= (0, 1, 0)
-__version_suffix__= '-dev1'
-__version__= ''.join(['.'.join(map(str, __version_info__)), __version_suffix__])
-__date__ = '11-12-2020'
-__status__ = 'Development'
-__author__ = 'Anton Azarov'
-__maintainer__ = 'a.azarov@diagnoptics.com'
-__license__ = 'Public Domain'
-__copyright__ = 'Diagnoptics Technologies B.V.'
+__version__= '0.1.0.0'
+__date__ = '06-08-2021'
+__status__ = 'Developement'
 
 __all__ = ['line_widgets', 'base_view_classes']

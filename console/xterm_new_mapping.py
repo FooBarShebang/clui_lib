@@ -1,4 +1,24 @@
 #usr/bin/python3
+"""
+Module clui_lib.console.keystroke_posix
+
+Implements mapping of the 1-byte control codes and CSI escape sequence codes
+onto the actual keys or keys combinations according to the xterm documentation,
+see https://invisible-island.net/xterm/xterm-function-keys.html.
+
+Note that not definitions can be tested directly because them being intercepted
+by OS or IDE, which prevents their appearance in the stdin.
+
+Attributes:
+    ASCII_CONTROL_MAPPING: dict(str -> list(str))
+    CSI_MAPPING: dict(bytes -> str)
+"""
+
+__version__= '1.0.0.0'
+__date__ = '06-08-2021'
+__status__ = 'Testing'
+
+#globals
 
 ASCII_CONTROL_MAPPING = {
     'SOH': ['Ctrl-a'],
