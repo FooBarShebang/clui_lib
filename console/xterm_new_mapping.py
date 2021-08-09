@@ -1,6 +1,6 @@
 #usr/bin/python3
 """
-Module clui_lib.console.keystroke_posix
+Module clui_lib.console.xterm_new_mapping
 
 Implements mapping of the 1-byte control codes and CSI escape sequence codes
 onto the actual keys or keys combinations according to the xterm documentation,
@@ -63,7 +63,7 @@ CSI_MAPPING = {
     b'\x1b[F' : 'End',
     b'\x1b[H' : 'Home',
     b'\x1b[3~' : 'Delete',
-    b'\x1b[5~' : 'PageUP',
+    b'\x1b[5~' : 'PageUp',
     b'\x1b[6~' : 'PageDown',
     b'\x1b0P' : 'F1',
     b'\x1b0Q' : 'F2',
@@ -84,7 +84,7 @@ CSI_MAPPING = {
     b'\x1b[1;2F' : 'Shift-End',
     b'\x1b[1;2H' : 'Shift-Home',
     b'\x1b[3;2~' : 'Shift-Delete',
-    b'\x1b[5;2~' : 'Shift-PageUP',
+    b'\x1b[5;2~' : 'Shift-PageUp',
     b'\x1b[6;2~' : 'Shift-PageDown',
     b'\x1b[1;2P' : 'Shift-F1',
     b'\x1b[1;2Q' : 'Shift-F2',
@@ -105,7 +105,7 @@ CSI_MAPPING = {
     b'\x1b[1;3F' : 'Alt-End',
     b'\x1b[1;3H' : 'Alt-Home',
     b'\x1b[3;3~' : 'Alt-Delete',
-    b'\x1b[5;3~' : 'Alt-PageUP',
+    b'\x1b[5;3~' : 'Alt-PageUp',
     b'\x1b[6;3~' : 'Alt-PageDown',
     b'\x1b[1;3P' : 'Alt-F1',
     b'\x1b[1;3Q' : 'Alt-F2',
@@ -126,7 +126,7 @@ CSI_MAPPING = {
     b'\x1b[1;4F' : 'Alt-Shift-End',
     b'\x1b[1;4H' : 'Alt-Shift-Home',
     b'\x1b[3;4~' : 'Alt-Shift-Delete',
-    b'\x1b[5;4~' : 'Alt-Shift-PageUP',
+    b'\x1b[5;4~' : 'Alt-Shift-PageUp',
     b'\x1b[6;4~' : 'Alt-Shift-PageDown',
     b'\x1b[1;4P' : 'Alt-Shift-F1',
     b'\x1b[1;4Q' : 'Alt-Shift-F2',
@@ -147,7 +147,7 @@ CSI_MAPPING = {
     b'\x1b[1;5F' : 'Ctrl-End',
     b'\x1b[1;5H' : 'Ctrl-Home',
     b'\x1b[3;5~' : 'Ctrl-Delete',
-    b'\x1b[5;5~' : 'Ctrl-PageUP',
+    b'\x1b[5;5~' : 'Ctrl-PageUp',
     b'\x1b[6;5~' : 'Ctrl-PageDown',
     b'\x1b[1;5P' : 'Ctrl-F1',
     b'\x1b[1;5Q' : 'Ctrl-F2',
@@ -168,7 +168,7 @@ CSI_MAPPING = {
     b'\x1b[1;6F' : 'Ctrl-Shift-End',
     b'\x1b[1;6H' : 'Ctrl-Shift-Home',
     b'\x1b[3;6~' : 'Ctrl-Shift-Delete',
-    b'\x1b[5;6~' : 'Ctrl-Shift-PageUP',
+    b'\x1b[5;6~' : 'Ctrl-Shift-PageUp',
     b'\x1b[6;6~' : 'Ctrl-Shift-PageDown',
     b'\x1b[1;6P' : 'Ctrl-Shift-F1',
     b'\x1b[1;6Q' : 'Ctrl-Shift-F2',
@@ -189,7 +189,7 @@ CSI_MAPPING = {
     b'\x1b[1;7F' : 'Ctrl-Alt-End',
     b'\x1b[1;7H' : 'Ctrl-Alt-Home',
     b'\x1b[3;7~' : 'Ctrl-Alt-Delete',
-    b'\x1b[5;7~' : 'Ctrl-Alt-PageUP',
+    b'\x1b[5;7~' : 'Ctrl-Alt-PageUp',
     b'\x1b[6;7~' : 'Ctrl-Alt-PageDown',
     b'\x1b[1;7P' : 'Ctrl-Alt-F1',
     b'\x1b[1;7Q' : 'Ctrl-Alt-F2',

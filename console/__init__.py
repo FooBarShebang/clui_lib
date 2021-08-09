@@ -12,8 +12,11 @@ Modules:
         on the analysis of the content of stdin stream
     xterm_new_mapping: CSI codes -> keys presses mapping specific for the
         xterm-new and compatible implementations of the virtual terminal
+    keystroke_windows: Microsoft Windows specific implementation of a keyboard
+        listener based on the msvcrt module's functionality
+    ibm_scancodes_mapping: IBM scancodes -> keys pressed mapping (Windows)
 """
 
-__version__= '0.1.0.0'
-__date__ = '06-08-2021'
+__version__= '0.2.0.0'
+__date__ = '09-08-2021'
 __status__ = 'Developement'

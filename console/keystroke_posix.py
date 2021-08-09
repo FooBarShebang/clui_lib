@@ -28,7 +28,7 @@ Functions:
 """
 
 __version__= '1.0.0.0'
-__date__ = '06-08-2021'
+__date__ = '09-08-2021'
 __status__ = 'Testing'
 
 #imports
@@ -257,7 +257,7 @@ def KeystrokesListener(Buffer: InputBuffer, Delay: float) -> None:
         if Input != '':
             if len(Input) == 1:
                 Code = ord(Input)
-                if (Code <= 32) or (Code == 127):
+                if Code in ASCII_CONTROL_CODES:
                     Name = ASCII_CONTROL_CODES[Code]
                     Keys = ASCII_CONTROL_MAPPING.get(Name, 'Undefined')
                     Buffer.put(ControlCode(Name, Keys))

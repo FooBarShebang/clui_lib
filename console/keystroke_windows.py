@@ -1,6 +1,6 @@
 #usr/bin/python3
 """
-Module clui_lib.console.keystroke_posix
+Module clui_lib.console.keystroke_windows
 
 Microsoft Windows specific implementation of the keyboard listener.
 
@@ -12,8 +12,8 @@ Based upon the ideas from
 """
 
 __version__= '1.0.0.0'
-__date__ = '06-08-2021'
-__status__ = 'Development'
+__date__ = '09-08-2021'
+__status__ = 'Testing'
 
 #imports
 
@@ -40,8 +40,11 @@ ROOT_FOLDER = os.path.dirname(LIB_FOLDER)
 if not (ROOT_FOLDER in sys.path):
     sys.path.append(ROOT_FOLDER)
 
-from clui_lib.console.keystroke_common import InputBuffer #, ControlCode
-#from clui_lib.console.keystroke_common import ASCII_CONTROL_CODES
+from clui_lib.console.keystroke_common import InputBuffer, ControlCode
+from clui_lib.console.keystroke_common import ASCII_CONTROL_CODES
+
+from clui_lib.console.ibm_scancodes_mapping import ASCII_CONTROL_MAPPING
+from clui_lib.console.ibm_scancodes_mapping import IBM_SC_MAPPING
 
 #+ main functions to be executed in the separate threads
 
@@ -53,10 +56,18 @@ def KeystrokesListener(Buffer: InputBuffer) -> None:
             Input = msvcrt.getwch()
             Code = ord(Input)
             if Code in [0, 224]: #control character
-                ScanCode = int(Code + ord(msvcrt.getwch())*256)
-                #TODO - map 1 byte control codes and 2-bytes control codes
-                #+ onto key-presses
-                Buffer.put(ScanCode)
+                #+ actual value b'\x00' or b'\xe0' may vary with the console
+                #+ implementation, but not the second character
+                Input = msvcrt.getwch()
+                ScanCode = ord(Input)
+                if ScanCode in IBM_SC_MAPPING:
+                    Buffer.put(IBM_SC_MAPPING[ScanCode])
+                else:
+                    Buffer.put('Scancode sequence ({},{})'.format(Code,
+                                                                    ScanCode))
+            elif Code in ASCII_CONTROL_CODES:
+                Buffer.put(ASCII_CONTROL_MAPPING.get(ASCII_CONTROL_CODES[Code],
+                                                                'Undefined'))
             else:
                 Buffer.put(Input)
 
@@ -72,7 +83,10 @@ def KeyboardListener(*, StopKey: str = 'q') -> None:
     while Key != StopKey:
         if Buffer.IsNotEmpty:
             Key = Buffer.get()
-            print('You pressed {}'.format(Key))
+            if isinstance(Key, ControlCode):
+                print('You pressed {}'.format(' or '.join(Key.Keys)))
+            else:
+                print('You pressed {}'.format(Key))
     print('stoping the process...')
     Buffer.deactivate()
     Buffer.empty()
