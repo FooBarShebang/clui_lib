@@ -10,15 +10,15 @@ Packages:
     cli_ui: actual CLI widgets with API, and processing of the typed commands
         input
     console: miscelaneous tools related to the console output and keyboard
-        listening
+        listening, colour output, etc.
 
 """
 
 __project__ ='Command Line User Interface Tools'
-__version_info__= (0, 1, 2)
+__version_info__= (0, 1, 3)
 __version_suffix__= '-dev1'
 __version__= ''.join(['.'.join(map(str, __version_info__)), __version_suffix__])
-__date__ = '06-08-2021'
+__date__ = '10-03-2023'
 __status__ = 'Development'
 __author__ = 'Anton Azarov'
 __maintainer__ = 'a.azarov@diagnoptics.com'

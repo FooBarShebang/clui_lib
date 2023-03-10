@@ -15,8 +15,10 @@ Modules:
     keystroke_windows: Microsoft Windows specific implementation of a keyboard
         listener based on the msvcrt module's functionality
     ibm_scancodes_mapping: IBM scancodes -> keys pressed mapping (Windows)
+    xterm_colours: POSIX-specific coloration of the console output based on
+        the control codes
 """
 
-__version__= '0.2.0.0'
-__date__ = '09-08-2021'
+__version__= '0.3.0.0'
+__date__ = '10-03-2023'
 __status__ = 'Developement'
