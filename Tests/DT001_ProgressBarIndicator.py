@@ -3,7 +3,7 @@
 Module clui_lib.Tests.DT001_ProgressBarIndicator
 
 Demonstratin test of the class ProgressBarIndicator defined in the module
-clui_lib.cli_lib.line_widgets.
+clui_lib.cli_ui.line_widgets.
 
 Demonstrates the proper scaling / sizing of the compound widget consisting of
 a variable width ProgressBar and two fixed width TextLabel widgets stacked into
