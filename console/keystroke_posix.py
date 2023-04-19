@@ -27,8 +27,8 @@ Functions:
         /*, float/, str// -> None
 """
 
-__version__= '1.0.0.0'
-__date__ = '09-08-2021'
+__version__= '1.0.0.1'
+__date__ = '19-04-2023'
 __status__ = 'Testing'
 
 #imports
@@ -143,40 +143,40 @@ def ParseEscapeSequence(Data: bytes) -> List[Union[str, ControlCode]]:
             presses are stil grouped with a key, which they modified, e.g.
             'Ctrl-Alt-p'
     
-    Version 1.0.0.0
+    Version 1.0.0.1
     """
     Result = []
     EscapedBuffer = []
-    iIndex = 0
+    Index = 0
     #removing the possible preceding non-escaped characters
-    while Data[iIndex] != 27:
-        iIndex += 1
-    if iIndex > 0:
-        Temp = SplitCharacters(Data[:iIndex].decode('utf_8'))
+    while Data[Index] != 27:
+        Index += 1
+    if Index:
+        Temp = SplitCharacters(Data[:Index].decode('utf_8'))
         Result.extend(Temp)
-    iStart = iIndex
-    iIndex += 1
-    while iIndex < len(Data):
-        if Data[iIndex] == 27: #start of new escape sequence
-            EscapedBuffer.append(Data[iStart : iIndex])
-            iStart = iIndex
-        iIndex += 1
-    EscapedBuffer.append(Data[iStart : iIndex])
+    Start = Index
+    Index += 1
+    while Index < len(Data):
+        if Data[Index] == 27: #start of new escape sequence
+            EscapedBuffer.append(Data[Start : Index])
+            Start = Index
+        Index += 1
+    EscapedBuffer.append(Data[Start : Index])
     for Escaped in EscapedBuffer:
         if Escaped in CSI_MAPPING:
             Result.append(CSI_MAPPING[Escaped])
         elif len(Escaped) >= 2:
             if 32 <= Escaped[1] < 127:
-                Result.append('Alt-{}'.format(chr(Escaped[1])))
+                Result.append(f'Alt-{chr(Escaped[1])}')
                 if len(Escaped) > 2:
                     Temp = SplitCharacters(Escaped[2:].decode('utf_8'))
                     Result.extend(Temp)
             else:
-                for iIndex in range(len(Escaped) - 1, 1, -1):
-                    Clipped = Escaped[:iIndex]
+                for Index in range(len(Escaped) - 1, 1, -1):
+                    Clipped = Escaped[:Index]
                     if Clipped in CSI_MAPPING:
                         Result.append(Clipped)
-                        Temp = SplitCharacters(Escaped[iIndex:].decode('utf_8'))
+                        Temp = SplitCharacters(Escaped[Index:].decode('utf_8'))
                         Result.extend(Temp)
                         break
         else:

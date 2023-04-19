@@ -33,9 +33,9 @@ Classes:
         into a single line representation in the text console
 """
 
-__version__= '1.0.1.0'
-__date__ = '09-12-2020'
-__status__ = 'Testing'
+__version__= '1.0.1.1'
+__date__ = '19-04-2023'
+__status__ = 'Development'
 
 #imports
 
@@ -170,7 +170,7 @@ class HWidget_ABC(CLUI_ABC):
         getStringValue():
             None -> str
     
-    Version 1.0.0.0
+    Version 1.0.0.1
     """
 
     #special methods
@@ -192,21 +192,21 @@ class HWidget_ABC(CLUI_ABC):
             UT_TypeError: passed Width argument is not an integer or None
             UT_ValueError: passed Width argument is integer but not positive
 
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
         if isinstance(Width, int):
             if hasattr(self, '_MinWidth'): #for the future mixin implementation
                 if Width >= self._MinWidth:
                     self._Width = Width
                 else:
-                    strError = '> {} - widget`s width in characters'.format(
+                    ErrorMessage = '> {} - widget`s width in characters'.format(
                                                             self._MinWidth - 1)
-                    raise UT_ValueError(Width, strError, SkipFrames = 1)
+                    raise UT_ValueError(Width, ErrorMessage, SkipFrames = 1)
             elif (Width > 0):
                 self._Width = Width
             else:
-                strError = '> 0 - widget`s width in characters'
-                raise UT_ValueError(Width, strError, SkipFrames = 1)
+                ErrorMessage = '> 0 - widget`s width in characters'
+                raise UT_ValueError(Width, ErrorMessage, SkipFrames = 1)
         elif Width is None:
             self._Width = 1
         else:
@@ -265,10 +265,10 @@ class HWidget_ABC(CLUI_ABC):
         Signature:
             None -> None
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
-        strBlank = ' ' * self.Width
-        sys.stdout.write('\r{0}\r'.format(strBlank))
+        Filler = ' ' * self.Width
+        sys.stdout.write(f'\r{Filler}\r')
         sys.stdout.flush()
 
 class TextLabel(HWidget_ABC):
@@ -301,7 +301,7 @@ class TextLabel(HWidget_ABC):
         getStringValue():
             None -> str
     
-    Version 1.1.0.0
+    Version 1.1.0.1
     """
 
     #special methods
@@ -329,30 +329,30 @@ class TextLabel(HWidget_ABC):
                 passed Alignment is not of 'l', 'c' or 'r' case-insensitive
                 values
 
-        Version 1.0.0.0
+        Version 1.0.1.0
         """
         if isinstance(Alignment, str):
             if Alignment.lower() in ['c', 'l', 'r']:
                 self._Alignment = Alignment.lower()
             else:
-                strError = "in values ['c', 'l', 'r'] case-insensitive"
-                raise UT_ValueError(Alignment, strError, SkipFrames = 1)
+                ErrorMessage = "in values ['c', 'l', 'r'] case-insensitive"
+                raise UT_ValueError(Alignment, ErrorMessage, SkipFrames = 1)
         else:
             raise UT_TypeError(Alignment, str, SkipFrames = 1)
         if isinstance(Width, int) and Width > 0:
-            iWidth = Width
+            _Width = Width
         else:
-            iWidth = len(str(Value)) + 1
+            _Width = len(str(Value)) + 1
         try:
-            super().__init__(Value, Width = iWidth)
+            super().__init__(Value, Width = _Width)
         except UT_TypeError as err:
             NewError = UT_TypeError(1, int, SkipFrames = 1)
-            NewError.args = (err.args[0], )
-            raise NewError
-        except UT_ValueError as err:
+            NewError.setMessage(err.getMessage())
+            raise NewError from None
+        except UT_ValueError as err1:
             NewError = UT_ValueError(1, 'whatever', SkipFrames = 1)
-            NewError.args = (err.args[0], )
-            raise NewError
+            NewError.setMessage(err1.getMessage())
+            raise NewError from None
     
     #public API
 
@@ -418,23 +418,24 @@ class TextLabel(HWidget_ABC):
         Signature:
             None -> str
         
-        Version 1.0.0.0
+        Version 2.0.0.0
         """
         if len(self.Value) < self.Width:
-            strValue = self.Value
+            Result = self.Value
         else:
-            strValue = self.Value[:(self.Width - 1)]
-        iLen = len(strValue)
-        iRemains = self.Width - iLen
-        if self.Alignment == 'l':
-            strOutValue = strValue + ' ' * iRemains
-        elif self.Alignment == 'r':
-            strOutValue = ' ' * iRemains + strValue
-        else:
-            iLeft = iRemains // 2
-            iRight = iRemains - iLeft
-            strOutValue = ' ' * iLeft + strValue + ' ' * iRight
-        return strOutValue
+            Result = self.Value[:(self.Width - 1)]
+        Length = len(Result)
+        ExtraSpaces = self.Width - Length
+        if ExtraSpaces:
+            LeftPositions = ExtraSpaces if self.Alignment == 'l' else 0
+            RightPositions = ExtraSpaces if self.Alignment == 'r' else 0
+            if self.Alignment == 'c':
+                LeftPositions = ExtraSpaces // 2
+                RightPositions = ExtraSpaces - LeftPositions
+            LeftSpaces = ' ' * LeftPositions
+            RightSpaces = ' ' * RightPositions
+            Result = f'{LeftSpaces}{Result}{RightSpaces}'
+        return Result
 
 class BarControl_ABC(HWidget_ABC):
     """
@@ -462,7 +463,7 @@ class BarControl_ABC(HWidget_ABC):
         getStringValue():
             None -> str
     
-    Version 1.0.0.0
+    Version 1.0.0.1
     """
 
     #private class attributes
@@ -489,18 +490,18 @@ class BarControl_ABC(HWidget_ABC):
             UT_ValueError: passed Width argument is integer but not positive, OR
                 passed Value is not within [0.0, 1.0] range inclusively
 
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
         try:
             super().__init__(Value, Width = Width)
         except UT_TypeError as err:
             NewError = UT_TypeError(1, int, SkipFrames = 1)
-            NewError.args = (err.args[0], )
-            raise NewError
-        except UT_ValueError as err:
+            NewError.setMessage(err.getMessage())
+            raise NewError from None
+        except UT_ValueError as err1:
             NewError = UT_ValueError(1, 'whatever', SkipFrames = 1)
-            NewError.args = (err.args[0], )
-            raise NewError
+            NewError.getMessage(err1.getMessage())
+            raise NewError from None
     
     #public API
 
@@ -535,12 +536,12 @@ class BarControl_ABC(HWidget_ABC):
         Args:
             Value: type A; any value to store as a string
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
         if isinstance(Value, (int, float)):
             if Value < 0 or Value > 1:
-                strError = 'in the range [0.0, 1.0] inclusively'
-                raise UT_ValueError(Value, strError, SkipFrames = 1)
+                ErrorMessage = 'in the range [0.0, 1.0] inclusively'
+                raise UT_ValueError(Value, ErrorMessage, SkipFrames = 1)
         else:
             raise UT_TypeError(Value, int)
         self._Value = float(Value)
@@ -569,7 +570,7 @@ class Slider(BarControl_ABC):
         getStringValue():
             None -> str
     
-    Version 1.1.0.0
+    Version 1.1.0.1
     """
 
     #public instance methods
@@ -581,18 +582,14 @@ class Slider(BarControl_ABC):
         Signature:
             None -> str
         
-        Version 1.0.0.0
+        Version 2.0.0.0
         """
-        strValue = '<'
         BarWidth = self.Width - 2
-        iPosition = 1 + int(self.Value * (BarWidth - 1))
-        if iPosition > 1:
-            strValue += '-' * (iPosition - 1)
-        strValue += 'I'
-        if iPosition < BarWidth:
-            strValue += '-' * (BarWidth - iPosition)
-        strValue += '>'
-        return strValue
+        Position = 1 + int(self.Value * (BarWidth - 1))
+        LeftSpacer = '-' * (Position - 1) if Position > 1 else ''
+        RightSpacer = '-' * (BarWidth - Position) if Position < BarWidth else ''
+        Value = f'<{LeftSpacer}I{RightSpacer}>'
+        return Value
 
 class ProgressBar(BarControl_ABC):
     """
@@ -618,7 +615,7 @@ class ProgressBar(BarControl_ABC):
         getStringValue():
             None -> str
     
-    Version 1.1.0.0
+    Version 1.1.0.1
     """
 
     #public instance methods
@@ -630,16 +627,14 @@ class ProgressBar(BarControl_ABC):
         Signature:
             None -> str
         
-        Version 1.0.0.0
+        Version 2.0.0.0
         """
-        strValue = '['
         BarWidth = self.Width - 2
-        iPosition = int(self.Value * BarWidth)
-        strValue += '#' * iPosition
-        if iPosition < BarWidth:
-            strValue += ' ' * (BarWidth - iPosition)
-        strValue += ']'
-        return strValue
+        Position = int(self.Value * BarWidth)
+        Filled = '#' * Position
+        Unfilled = ' ' * (BarWidth - Position) if Position < BarWidth else ''
+        Result = f'[{Filled}{Unfilled}]'
+        return Result
 
 class ScalableWidth:
     """
@@ -657,7 +652,7 @@ class ScalableWidth:
     The mixed-in class must have the attributes _MinWidth and _Width as well
     as the methods clear() and show().
 
-    Version 1.0.0.0
+    Version 1.0.0.1
     """
 
     #public API
@@ -694,12 +689,12 @@ class ScalableWidth:
             UT_ValueError: arguent is an integer but smaller than the minimum
                 allowed width
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
         if isinstance(Width, int):
             if Width < self.MinWidth:
-                strError = '> {} - minimum allowed width'.format(self.MinWidth)
-                raise UT_ValueError(Width, strError, SkipFrames = 1)
+                ErrorMessage = f'> {self.MinWidth} - minimum allowed width'
+                raise UT_ValueError(Width, ErrorMessage, SkipFrames = 1)
             self.clear()
         else:
             raise UT_TypeError(Width, int, SkipFrames = 1)
@@ -807,7 +802,7 @@ class TextLabelVW(TextLabel, ScalableWidth):
         getStringValue():
             None -> str
     
-    Version 1.0.0.0
+    Version 1.0.0.1
     """
     pass
 
@@ -836,7 +831,7 @@ class TextLabelVW(TextLabel, ScalableWidth):
                 passed Alignment is not of 'l', 'c' or 'r' case-insensitive
                 values
 
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
         self._Value = None
         self.setValue(Value)
@@ -844,17 +839,17 @@ class TextLabelVW(TextLabel, ScalableWidth):
             if Width >= self.MinWidth:
                 self._Width = Width
             else:
-                strError = '> {} - widget`s width in characters'.format(
+                ErrorMessage = '> {} - widget`s width in characters'.format(
                                                             self.MinWidth - 1)
-                raise UT_ValueError(Width, strError, SkipFrames = 1)
+                raise UT_ValueError(Width, ErrorMessage, SkipFrames = 1)
         elif not (Width is None):
             raise UT_TypeError(Width, int, SkipFrames = 1)
         if isinstance(Alignment, str):
             if Alignment.lower() in ['c', 'l', 'r']:
                 self._Alignment = Alignment.lower()
             else:
-                strError = "in values ['c', 'l', 'r'] case-insensitive"
-                raise UT_ValueError(Alignment, strError, SkipFrames = 1)
+                ErrorMessage = "in values ['c', 'l', 'r'] case-insensitive"
+                raise UT_ValueError(Alignment, ErrorMessage, SkipFrames = 1)
         else:
             raise UT_TypeError(Alignment, str, SkipFrames = 1)
     
@@ -873,14 +868,14 @@ class TextLabelVW(TextLabel, ScalableWidth):
         Args:
             Value: type A; any value to store as a string
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
         if not (self._Value is None):
             self.clear()
-        strValue = str(Value)
-        self._Value = strValue
-        self._MinWidth = len(strValue) + 1
-        self._Width = len(strValue) + 1
+        _Value = str(Value)
+        self._Value = _Value
+        self._MinWidth = len(_Value) + 1
+        self._Width = len(_Value) + 1
 
 class HContainer(CLUI_ABC):
     """
@@ -919,7 +914,7 @@ class HContainer(CLUI_ABC):
         getStringValue():
             None -> str
     
-    Version 1.1.0.0
+    Version 1.1.0.1
     """
 
     #special methods
@@ -940,14 +935,14 @@ class HContainer(CLUI_ABC):
             UT_TypeError: passed Width argument is not an integer
             UT_ValueError: passed Width argument is integer but not >= 0
 
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
         if isinstance(Width, int):
             if (Width >= 0):
                 self._Width = Width
             else:
-                strError = '>= 0 - widget`s width in characters'
-                raise UT_ValueError(Width, strError, SkipFrames = 1)
+                ErrorMessage = '>= 0 - widget`s width in characters'
+                raise UT_ValueError(Width, ErrorMessage, SkipFrames = 1)
         else:
             raise UT_TypeError(Width, int, SkipFrames = 1)
         self._Widgets = []
@@ -977,15 +972,15 @@ class HContainer(CLUI_ABC):
         Signature:
             None -> int >= 0
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
-        iResult = 0
+        Result = 0
         for Item in self._Widgets:
             if hasattr(Item, 'MinWidth') and hasattr(Item, 'setWidth'):
-                iResult += Item.MinWidth
+                Result += Item.MinWidth
             else:
-                iResult += Item.Width
-        return iResult
+                Result += Item.Width
+        return Result
     
     #+ instance methods
 
@@ -1006,34 +1001,34 @@ class HContainer(CLUI_ABC):
             UT_ValueError: arguent is an integer but smaller than the minimum
                 required width
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
-        iMinWidth = self.MinWidth
+        MinWidth = self.MinWidth
         if isinstance(Width, int):
-            if Width < iMinWidth:
-                strError = '> {} - minimum required width'.format(iMinWidth)
-                raise UT_ValueError(Width, strError, SkipFrames = 1)
+            if Width < MinWidth:
+                ErrorMessage = f'> {MinWidth} - minimum required width'
+                raise UT_ValueError(Width, ErrorMessage, SkipFrames = 1)
             self.clear()
         else:
             raise UT_TypeError(Width, int, SkipFrames = 1)
         self._Width = Width
         #scale the variable width widgets
-        iFreeSpace = self.Width - iMinWidth
-        iNScalable = 0
+        FreeSpace = self.Width - MinWidth
+        NumberScalable = 0
         for Item in self._Widgets:
             if hasattr(Item, 'MinWidth') and hasattr(Item, 'setWidth'):
-                iNScalable += 1
-        if iNScalable:
-            iMeanExtra = iFreeSpace // iNScalable
-            iLastExtra = iFreeSpace - iMeanExtra * iNScalable
-            iCurrentlyAddingWidgetNumber = 1
+                NumberScalable += 1
+        if NumberScalable:
+            MeanExtra = FreeSpace // NumberScalable
+            LastExtra = FreeSpace - MeanExtra * NumberScalable
+            NumberScaledWidgets = 0
             for Item in self._Widgets:
                 if hasattr(Item, 'MinWidth') and hasattr(Item, 'setWidth'):
-                    Item.setWidth(Item.MinWidth + iMeanExtra)
-                    if iCurrentlyAddingWidgetNumber == iNScalable:
-                        Item.setWidth(Item.Width + iLastExtra)
+                    Item.setWidth(Item.MinWidth + MeanExtra)
+                    if NumberScaledWidgets == NumberScalable:
+                        Item.setWidth(Item.Width + LastExtra)
                         break
-                    iCurrentlyAddingWidgetNumber += 1
+                    NumberScaledWidgets += 1
     
     def clear(self) -> None:
         """
@@ -1043,10 +1038,10 @@ class HContainer(CLUI_ABC):
         Signature:
             None -> None
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
-        strBlank = ' ' * self.Width
-        sys.stdout.write('\r{0}\r'.format(strBlank))
+        Blanks = ' ' * self.Width
+        sys.stdout.write(f'\r{Blanks}\r')
         sys.stdout.flush()
     
     def getStringValue(self) -> str:
@@ -1057,10 +1052,10 @@ class HContainer(CLUI_ABC):
         Signature:
             None -> str
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
-        strResult = ''.join([Item.getStringValue() for Item in self._Widgets])
-        return strResult
+        Result = ''.join([Item.getStringValue() for Item in self._Widgets])
+        return Result
     
     def addWidget(self, Widget: HWidget_ABC) -> None:
         """
@@ -1080,19 +1075,19 @@ class HContainer(CLUI_ABC):
             UT_Exception: the width of the new widget is too large to fit the
                 remaining space in the container
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
         if not isinstance(Widget, HWidget_ABC):
             raise UT_TypeError(Widget, HWidget_ABC, SkipFrames = 1)
         if hasattr(Widget, 'MinWidth') and hasattr(Widget, 'setWidth'):
-            iRequired = Widget.MinWidth
+            RequiredWidth = Widget.MinWidth
         else:
-            iRequired = Widget.Width
-        iRemains = self.Width - self.MinWidth
-        if iRequired > iRemains:
-            strError = ' '.join(['Cannot fit new widget -',
-                            'required {} characters space,'.format(iRequired),
-                            'available {} characters'.format(iRemains)])
-            raise UT_Exception(strError, SkipFrames = 1)
+            RequiredWidth = Widget.Width
+        Remains = self.Width - self.MinWidth
+        if RequiredWidth > Remains:
+            ErrorMessage = ' '.join(['Cannot fit new widget -',
+                                f'required {RequiredWidth} characters space,',
+                                            f'available {Remains} characters'])
+            raise UT_Exception(ErrorMessage, SkipFrames = 1)
         self._Widgets.append(Widget)
         self.setWidth(self.Width)

@@ -13,8 +13,8 @@ Classes:
     InputBuffer
 """
 
-__version__= '1.0.0.0'
-__date__ = '06-08-2021'
+__version__= '1.0.0.1'
+__date__ = '19-04-2023'
 __status__ = 'Testing'
 
 #imports
@@ -75,7 +75,7 @@ class ControlCode:
         Name: (read-only) str; symbolic name of the control code
         Keys: (read-only) list(str); the keys (combinations) causing this code
     
-    Version 1.0.0.0
+    Version 1.0.0.1
     """
     
     #special methods
@@ -93,10 +93,10 @@ class ControlCode:
             Keys: seq(str); key(s) or keys combination(s) resulting in the
                 issueing of such control code
 
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
-        self._strName = Name
-        self._strseqKeys = list(Keys)
+        self._Name = Name
+        self._KeysSequence = list(Keys)
     
     @property
     def Name(self) -> str:
@@ -106,9 +106,9 @@ class ControlCode:
         Signature:
             None -> str
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
-        return self._strName
+        return self._Name
     
     @property
     def Keys(self) -> List[str]:
@@ -119,9 +119,9 @@ class ControlCode:
         Signature:
             None -> list(str)
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
-        return self._strseqKeys
+        return self._KeysSequence
 
 class InputBuffer:
     """
@@ -150,7 +150,7 @@ class InputBuffer:
         empty():
             None -> None
     
-    Version 1.0.0.0
+    Version 1.0.0.1
     """
     
     def __init__(self) -> None:
@@ -161,11 +161,11 @@ class InputBuffer:
         Signature:
             None -> None
 
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
-        self._bIsActive = False
-        self._lstBuffer = []
-        self._objLock = Lock()
+        self._IsActive = False
+        self._Buffer = []
+        self._Lock = Lock()
     
     @property
     def IsActive(self) -> bool:
@@ -178,9 +178,9 @@ class InputBuffer:
         Signature:
             None -> bool
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
-        return self._bIsActive
+        return self._IsActive
     
     @property
     def IsNotEmpty(self) -> bool:
@@ -190,9 +190,9 @@ class InputBuffer:
         Signature:
             None -> bool
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
-        if len(self._lstBuffer):
+        if self._Buffer:
             Result = True
         else:
             Result = False
@@ -208,9 +208,9 @@ class InputBuffer:
         Signature:
             None -> None
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
-        self._bIsActive = True
+        self._IsActive = True
     
     def deactivate(self) -> None:
         """
@@ -222,9 +222,9 @@ class InputBuffer:
         Signature:
             None -> None
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
-        self._bIsActive = False
+        self._IsActive = False
     
     def put(self, Data: Any) -> None:
         """
@@ -233,11 +233,11 @@ class InputBuffer:
         Signature:
             type A -> None
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
-        with self._objLock:
+        with self._Lock:
             if self.IsActive:
-                self._lstBuffer.append(Data)
+                self._Buffer.append(Data)
     
     def get(self) -> Any:
         """
@@ -247,12 +247,12 @@ class InputBuffer:
         Signature:
             None -> type A
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
         if self.IsNotEmpty:
-            with self._objLock:
+            with self._Lock:
                 if self.IsActive:
-                    Result = self._lstBuffer.pop(0)
+                    Result = self._Buffer.pop(0)
                 else:
                     Result = None
         else:
@@ -267,6 +267,6 @@ class InputBuffer:
         Signature:
             None -> None
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
-        self._lstBuffer.clear()
+        self._Buffer.clear()

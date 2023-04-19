@@ -17,6 +17,6 @@ Modules:
     ibm_scancodes_mapping: IBM scancodes -> keys pressed mapping (Windows)
 """
 
-__version__= '0.2.0.0'
-__date__ = '09-08-2021'
+__version__= '0.2.0.1'
+__date__ = '19-04-2023'
 __status__ = 'Developement'

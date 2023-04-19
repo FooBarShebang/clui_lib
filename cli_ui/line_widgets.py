@@ -8,8 +8,8 @@ Classes:
     ProgressBarIndicator
 """
 
-__version__= '1.0.0.0'
-__date__ = '10-12-2020'
+__version__= '1.0.0.1'
+__date__ = '19-04-2023'
 __status__ = 'Development'
 
 #imports
@@ -74,7 +74,7 @@ class ProgressBarIndicator:
         getStringValue():
             None -> str
     
-    Version 1.0.0.0
+    Version 1.0.0.1
     """
 
     #special methods
@@ -103,50 +103,49 @@ class ProgressBarIndicator:
                 must be enough to fit the progress bar and the 
                 defaults to 80
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
         if isinstance(Range, int):
             if Range <= 0:
-                strError = '> 0 - maximum value, i.e. range'
-                raise UT_ValueError(Range, strError, SkipFrames = 1)
+                ErrorMessage = '> 0 - maximum value, i.e. range'
+                raise UT_ValueError(Range, ErrorMessage, SkipFrames = 1)
             self._Range = Range
         else:
             raise UT_TypeError(Range, int, SkipFrames = 1)
         if isinstance(Value, int):
             if (Value < 0) or (Value > self.Range):
-                strError = '0 <= value <= {} - current value'.format(self.Range)
-                raise UT_ValueError(Value, strError, SkipFrames = 1)
+                ErrorMessage = f'0 <= value <= {self.Range} - current value'
+                raise UT_ValueError(Value, ErrorMessage, SkipFrames = 1)
             self._Value = Value
         else:
             raise UT_TypeError(Value, int, SkipFrames = 1)
-        iMinWidth = 5 #minimum for the progress bar
+        MinWidth = 5 #minimum for the progress bar
         if ShowCounter:
-            iMinWidth += 2 * (len(str(Range)) + 1) #minimum for counter
+            MinWidth += 2 * (len(str(Range)) + 1) #minimum for counter
         if ShowPercents:
-            iMinWidth += 5 #minimum for % indicator
+            MinWidth += 5 #minimum for % indicator
         if isinstance(Width, int):
-            if (Width >= iMinWidth):
+            if (Width >= MinWidth):
                 self._Width = Width
             else:
-                strError = '>= {} - widget`s width in characters'.format(
-                                                                    iMinWidth)
-                raise UT_ValueError(Width, strError, SkipFrames = 1)
+                ErrorMessage = f'>= {MinWidth} - widget`s width in characters'
+                raise UT_ValueError(Width, ErrorMessage, SkipFrames = 1)
         else:
             raise UT_TypeError(Width, int, SkipFrames = 1)
         self._PBar = bc.ProgressBarVW(0)
         self._Indicator = bc.HContainer(Width = self.Width)
         self._Indicator.addWidget(self._PBar)
         if ShowCounter:
-            strValue = '{}%'.format((100 * self.Value) // self.Range)
-            iWidth = 2 * (len(str(self.Range)) + 1)
-            self._Counter = bc.TextLabel(strValue, Width = iWidth,
+            DisplayValue = f'{self.Value}/{self.Range}'
+            CounterWidth = 2 * (len(str(self.Range)) + 1)
+            self._Counter = bc.TextLabel(DisplayValue, Width = CounterWidth,
                                                                 Alignment = 'r')
             self._Indicator.addWidget(self._Counter)
         else:
             self._Counter = None
         if ShowPercents:
-            strValue = '{}%'.format((100 * self.Value) // self.Range)
-            self._Percents = bc.TextLabel(strValue, Width = 5, Alignment = 'r')
+            DisplayValue = '{}%'.format((100 * self.Value) // self.Range)
+            self._Percents = bc.TextLabel(DisplayValue, Width=5, Alignment= 'r')
             self._Indicator.addWidget(self._Percents)
         else:
             self._Percents = None
@@ -276,11 +275,11 @@ class ProgressBarIndicator:
         Signature:
             None -> None
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
-        iValue = self.Value
-        if iValue < self.Range:
-            self.setValue(iValue + 1)
+        Value = self.Value
+        if Value < self.Range:
+            self.setValue(Value + 1)
     
     def dec(self) -> None:
         """
@@ -290,11 +289,11 @@ class ProgressBarIndicator:
         Signature:
             None -> None
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
-        iValue = self.Value
-        if iValue > 0:
-            self.setValue(iValue - 1)
+        Value = self.Value
+        if Value > 0:
+            self.setValue(Value - 1)
     
     def setValue(self, Value: int) -> None:
         """
@@ -313,12 +312,12 @@ class ProgressBarIndicator:
             UT_ValueError: argument is an integer but outside the allowed values
                 range
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
         if isinstance(Value, int):
             if (Value < 0) or (Value > self.Range):
-                strError = '0 <= value <= {} - current value'.format(self.Range)
-                raise UT_ValueError(Value, strError, SkipFrames = 1)
+                ErrorMessage = f'0 <= value <= {self.Range} - current value'
+                raise UT_ValueError(Value, ErrorMessage, SkipFrames = 1)
         else:
             raise UT_TypeError(Value, int, SkipFrames = 1)
         self._Value = Value
@@ -342,13 +341,13 @@ class ProgressBarIndicator:
             UT_ValueError: argument is an integer but smaller than the minimum
                 required space
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
-        iMinWidth = self._Indicator.MinWidth
+        MinWidth = self._Indicator.MinWidth
         if isinstance(Width, int):
-            if Width < iMinWidth:
-                strError = '>= {} - minimum width'.format(iMinWidth)
-                raise UT_ValueError(Width, strError, SkipFrames = 1)
+            if Width < MinWidth:
+                ErrorMessage = f'>= {MinWidth} - minimum width'
+                raise UT_ValueError(Width, ErrorMessage, SkipFrames = 1)
         else:
             raise UT_TypeError(Width, int, SkipFrames = 1)
         self._Width = Width
@@ -377,28 +376,30 @@ class ProgressBarIndicator:
             UT_TypeError: argument is not an integer
             UT_ValueError: argument is an integer but not positive
 
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
         if isinstance(Range, int):
             if Range <= 0:
-                strError = '> 0 - maximum value, i.e. range'
-                raise UT_ValueError(Range, strError, SkipFrames = 1)
+                ErrorMessage = '> 0 - maximum value, i.e. range'
+                raise UT_ValueError(Range, ErrorMessage, SkipFrames = 1)
         else:
             raise UT_TypeError(Range, int, SkipFrames = 1)
         if self.Value > Range:
             self._Value = Range
         if not (self._Counter is None):
-            iOldLength = len(str(self.Range))
-            iNewLength = len(str(Range))
-            if iOldLength != iNewLength:
-                iMinLength = self._PBar.MinWidth + 2 * (iNewLength + 1)
+            OldLength = len(str(self.Range))
+            NewLength = len(str(Range))
+            if OldLength != NewLength:
+                MinLength = self._PBar.MinWidth + 2 * (NewLength + 1)
                 if not (self._Percents is None):
-                    iMinLength += self._Percents.Width
-                if iMinLength > self.Width:
-                    self._Width = iMinLength
+                    MinLength += self._Percents.Width
+                if MinLength > self.Width:
+                    self._Width = MinLength
                 del self._Indicator
                 del self._Counter
-                self._Counter = bc.TextLabel(' ', Width = 2 * (iNewLength + 1),
+                DisplayValue = f'{self.Value}/{Range}'
+                self._Counter = bc.TextLabel(DisplayValue,
+                                                    Width = 2 * (NewLength + 1),
                                                                 Alignment = 'r') 
                 self._Indicator = bc.HContainer(Width = self.Width)
                 self._Indicator.addWidget(self._PBar)
@@ -421,14 +422,14 @@ class ProgressBarIndicator:
         Returns:
             str: representation of the state of the widget to be printed out
         
-        Version 1.0.0.0
+        Version 1.0.0.1
         """
-        fPosition = self.Value / self.Range
-        self._PBar.setValue(fPosition)
+        Position = self.Value / self.Range
+        self._PBar.setValue(Position)
         if not (self._Counter is None):
-            strValue = '{}/{}'.format(self.Value, self.Range)
-            self._Counter.setValue(strValue)
+            DisplayValue = f'{self.Value}/{self.Range}'
+            self._Counter.setValue(DisplayValue)
         if not (self._Percents is None):
-            strValue = '{}%'.format((100 * self.Value) // self.Range)
-            self._Percents.setValue(strValue)
+            DisplayValue = '{}%'.format((100 * self.Value) // self.Range)
+            self._Percents.setValue(DisplayValue)
         return self._Indicator.getStringValue()
