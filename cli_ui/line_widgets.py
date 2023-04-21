@@ -9,7 +9,7 @@ Classes:
 """
 
 __version__= '1.0.0.1'
-__date__ = '19-04-2023'
+__date__ = '21-04-2023'
 __status__ = 'Development'
 
 #imports
@@ -33,7 +33,6 @@ if not (ROOT_FOLDER in sys.path):
 import clui_lib.cli_ui.base_view_classes as bc
 
 from introspection_lib.base_exceptions import UT_ValueError, UT_TypeError
-from introspection_lib.base_exceptions import UT_Exception_Check, UT_Exception
 
 #classes
 

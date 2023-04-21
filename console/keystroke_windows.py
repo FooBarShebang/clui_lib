@@ -12,7 +12,7 @@ Based upon the ideas from
 """
 
 __version__= '1.0.0.0'
-__date__ = '09-08-2021'
+__date__ = '21-04-2023'
 __status__ = 'Testing'
 
 #imports
@@ -24,7 +24,7 @@ import os
 
 #+check that the OS is Windows NT-based, i.e. msvcrt will be available
 
-if os.name != 'nt':
+if os.name == 'nt':
     print('This module is not compatible with you OS')
     sys.exit(1)
 
@@ -33,18 +33,9 @@ import threading
 
 #+ other DO libraries
 
-MODULE_FOLDER = os.path.dirname(os.path.realpath(__file__))
-LIB_FOLDER = os.path.dirname(MODULE_FOLDER)
-ROOT_FOLDER = os.path.dirname(LIB_FOLDER)
+from .keystroke_common import InputBuffer, ControlCode, ASCII_CONTROL_CODES
 
-if not (ROOT_FOLDER in sys.path):
-    sys.path.append(ROOT_FOLDER)
-
-from clui_lib.console.keystroke_common import InputBuffer, ControlCode
-from clui_lib.console.keystroke_common import ASCII_CONTROL_CODES
-
-from clui_lib.console.ibm_scancodes_mapping import ASCII_CONTROL_MAPPING
-from clui_lib.console.ibm_scancodes_mapping import IBM_SC_MAPPING
+from .ibm_scancodes_mapping import ASCII_CONTROL_MAPPING, IBM_SC_MAPPING
 
 #+ main functions to be executed in the separate threads
 

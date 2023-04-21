@@ -28,7 +28,7 @@ Functions:
 """
 
 __version__= '1.0.0.1'
-__date__ = '19-04-2023'
+__date__ = '21-04-2023'
 __status__ = 'Testing'
 
 #imports
@@ -54,15 +54,7 @@ from typing import List, Union
 
 #+ other DO libraries
 
-MODULE_FOLDER = os.path.dirname(os.path.realpath(__file__))
-LIB_FOLDER = os.path.dirname(MODULE_FOLDER)
-ROOT_FOLDER = os.path.dirname(LIB_FOLDER)
-
-if not (ROOT_FOLDER in sys.path):
-    sys.path.append(ROOT_FOLDER)
-
-from clui_lib.console.keystroke_common import InputBuffer, ControlCode
-from clui_lib.console.keystroke_common import ASCII_CONTROL_CODES
+from .keystroke_common import InputBuffer, ControlCode, ASCII_CONTROL_CODES
 
 #globals
 
