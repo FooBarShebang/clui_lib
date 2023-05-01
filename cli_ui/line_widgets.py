@@ -30,7 +30,7 @@ if not (ROOT_FOLDER in sys.path):
 
 #++ actual imports
 
-import clui_lib.cli_ui.base_view_classes as bc
+from .base_view_classes import HContainer, ProgressBarVW, TextLabel
 
 from introspection_lib.base_exceptions import UT_ValueError, UT_TypeError
 
@@ -131,20 +131,20 @@ class ProgressBarIndicator:
                 raise UT_ValueError(Width, ErrorMessage, SkipFrames = 1)
         else:
             raise UT_TypeError(Width, int, SkipFrames = 1)
-        self._PBar = bc.ProgressBarVW(0)
-        self._Indicator = bc.HContainer(Width = self.Width)
+        self._PBar = ProgressBarVW(0)
+        self._Indicator = HContainer(Width = self.Width)
         self._Indicator.addWidget(self._PBar)
         if ShowCounter:
             DisplayValue = f'{self.Value}/{self.Range}'
             CounterWidth = 2 * (len(str(self.Range)) + 1)
-            self._Counter = bc.TextLabel(DisplayValue, Width = CounterWidth,
+            self._Counter = TextLabel(DisplayValue, Width = CounterWidth,
                                                                 Alignment = 'r')
             self._Indicator.addWidget(self._Counter)
         else:
             self._Counter = None
         if ShowPercents:
             DisplayValue = '{}%'.format((100 * self.Value) // self.Range)
-            self._Percents = bc.TextLabel(DisplayValue, Width=5, Alignment= 'r')
+            self._Percents = TextLabel(DisplayValue, Width=5, Alignment= 'r')
             self._Indicator.addWidget(self._Percents)
         else:
             self._Percents = None
@@ -397,10 +397,10 @@ class ProgressBarIndicator:
                 del self._Indicator
                 del self._Counter
                 DisplayValue = f'{self.Value}/{Range}'
-                self._Counter = bc.TextLabel(DisplayValue,
+                self._Counter = TextLabel(DisplayValue,
                                                     Width = 2 * (NewLength + 1),
                                                                 Alignment = 'r') 
-                self._Indicator = bc.HContainer(Width = self.Width)
+                self._Indicator = HContainer(Width = self.Width)
                 self._Indicator.addWidget(self._PBar)
                 self._Indicator.addWidget(self._Counter)
                 if not (self._Percents is None):
