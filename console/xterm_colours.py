@@ -1,4 +1,3 @@
-#usr/bin/python3
 """
 Module clui_lib.console.xterm_colours
 
@@ -13,12 +12,12 @@ Classes:
     ColouredBuffer: variable length coloured text buffer
 
 Functions:
-    Colorize(Data, *, Foreground, Background, Bold, Underline, Invert):
-        type A/, int OR None, int OR None, dict(str -> bool)/ -> str
+    Colorize(Data, *, Foreground, Background, **kwargs):
+        type A/, *, int OR None, int OR None, dict(str -> bool)/ -> str
 """
 
-__version__= '1.0.0.0'
-__date__ = '10-03-2023'
+__version__= '1.0.0.1'
+__date__ = '01-07-2026'
 __status__ = 'Development'
 
 #imports
@@ -36,7 +35,7 @@ if os.name != 'posix':
 
 from enum import IntEnum
 
-from typing import Any, Optional, Dict
+from typing import Any, Optional
 
 #+ other DO libraries
 
@@ -157,19 +156,19 @@ class Attributes(IntEnum):
 
 #+ available attributes
 
-ALL_ATTRIBUTES = [Item.name for Item in Attributes]
+ALL_ATTRIBUTES = list(Item.name for Item in Attributes)
 
 #+ pallete - 256 colours
 
 MIN_INDEX = 0
 
-MAX_INDEX = 256
+MAX_INDEX = 255
 
 # functions
 
 def Colorize(Data: Any, *, Foreground: Optional[int] = None,
                         Background: Optional[int] = None,
-                        **kwargs: Dict[str, bool]) -> str:
+                        **kwargs: dict[str, bool]) -> str:
     """
     Prepares a string with (optional) background and foreground colours changed
     as well as (optional) boldness, underline, inverse, etc. attributes, which
@@ -181,7 +180,7 @@ def Colorize(Data: Any, *, Foreground: Optional[int] = None,
     STRIKE, HIDE.
 
     Signature:
-        type A/, int OR None, int OR None, dict(str -> bool)/ -> str
+        type A/, *, int OR None, int OR None, dict(str -> bool)/ -> str
     
     Arguments:
         Data: type A; any data to be converted into a string
@@ -223,7 +222,7 @@ def Colorize(Data: Any, *, Foreground: Optional[int] = None,
             raise UT_ValueError(Foreground,
                 'in range [{}, {}] colours palette, Foreground argument'.format(
                                         MIN_INDEX, MAX_INDEX), SkipFrames = 1)
-        Codes.append('{}{}'.format(FOREGROUND, Foreground))
+        Codes.append(f'{FOREGROUND}{Foreground}')
     if not (Background is None):
         if not isinstance(Background, int):
             objError = UT_TypeError(Background, int, SkipFrames = 1)
@@ -233,7 +232,7 @@ def Colorize(Data: Any, *, Foreground: Optional[int] = None,
             raise UT_ValueError(Background,
                 'in range [{}, {}] colours palette, Background argument'.format(
                                         MIN_INDEX, MAX_INDEX), SkipFrames = 1)
-        Codes.append('{}{}'.format(BACKGROUND, Background))
+        Codes.append(f'{BACKGROUND}{Background}')
     if not len(Codes):
         Result = str(Data)
     else:
@@ -310,8 +309,8 @@ class ColouredBuffer:
         Version 1.0.0.0
         """
         return Colorize(self._strLast, Foreground = self._iForeground,
-                            Background= self._iBackground, Bold = self._bBold,
-                            Underline = self._bUnderline, Invert= self._bInvert)
+                            Background= self._iBackground,
+                            **self._dictAttributes)
 
     @property
     def Data(self) -> str:
@@ -333,7 +332,7 @@ class ColouredBuffer:
 
     def put(self, Data: Any, *, Foreground: Optional[int] = None,
                         Background: Optional[int] = None,
-                        **kwargs: Dict[str, bool]) -> None:
+                        **kwargs: dict[str, bool]) -> None:
         """
         Adds a sub-string into the buffer with (optional) background and
         foreground colours changed as well as (optional) boldness, underline and
@@ -413,7 +412,7 @@ class ColouredBuffer:
                 'in range [{}, {}] colours palette, Background argument'.format(
                                         MIN_INDEX, MAX_INDEX), SkipFrames = 1)
             if (self._iBackground is None) or Background != self._iBackground:
-                Codes.append('{}{}'.format(BACKGROUND, Background))
+                Codes.append(f'{BACKGROUND}{Background}')
         elif not (self._iBackground is None):
             if (len(Codes) and Codes[0] != 0) or not len(Codes):
                 bReset = True
@@ -424,7 +423,7 @@ class ColouredBuffer:
                 if Value:
                     Codes.append(int(Attributes[Name]))
             if not (self._iForeground is None):
-                Codes.append('{}{}'.format(FOREGROUND, self._iForeground))
+                Codes.append(f'{FOREGROUND}{self._iForeground}')
             if not (self._iBackground is None):
                 Codes.append('{}{}'.format(BACKGROUND, self._iBackground))
         self._strLast = str(Data)
@@ -435,10 +434,10 @@ class ColouredBuffer:
                                                         SUFFIX, self._strLast)
         self._strData += Result
     
-    def print(self):
+    def print(self) -> None:
         """
         Prints the content of the entire accumulated buffer, clears all settings
-        to the defaults and the empties the buffers.
+        to the defaults.
 
         Signature:
             None -> None
@@ -447,17 +446,15 @@ class ColouredBuffer:
         """
         print(self.Data)
         self._reset()
+    
+    def clear(self) -> None:
+        """
+        Clears the entire accumulated buffer and all settings to the default
+        values without printing anything.
 
-if __name__ == '__main__':
-    print(Colorize('whatever', Foreground = Colours8B.RED,
-                    Background = Colours8.GREEN, BOLD = True, ITALIC = True))
-    objTest = ColouredBuffer()
-    objTest.put('Hello, ')
-    objTest.put('Nicole', Foreground = Colours8B.RED,
-                            Background = Colours8.GREEN,
-                            BOLD = True, ITALIC = True)
-    objTest.put(', my dear', ITALIC = True, DOUBLE = True)
-    objTest.put('!')
-    Repr = repr(objTest.Data)
-    objTest.print()
-    print(Repr)
+        Signature:
+            None -> None
+        
+        Version 1.0.0.0
+        """
+        self._reset()

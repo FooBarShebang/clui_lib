@@ -1,4 +1,3 @@
-#usr/bin/python3
 """
 Module clui_lib.console.keystroke_common
 
@@ -13,16 +12,16 @@ Classes:
     InputBuffer
 """
 
-__version__= '1.0.0.1'
-__date__ = '19-04-2023'
+__version__= '1.0.0.2'
+__date__ = '01-07-2026'
 __status__ = 'Testing'
 
 #imports
 
 #+ standard libraries
 
-from typing import Any, Sequence, List
-
+from typing import Any
+from collections.abc import Sequence
 from threading import Lock
 
 #globals
@@ -111,7 +110,7 @@ class ControlCode:
         return self._Name
     
     @property
-    def Keys(self) -> List[str]:
+    def Keys(self) -> list[str]:
         """
         Getter property to access the stored keys (combinations) resulting in
         the issue of that code.

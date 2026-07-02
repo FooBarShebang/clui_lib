@@ -22,13 +22,13 @@ Functions:
     StdinListener(Buffer)
         clui_lib.console.keystroke_abc.InputBuffer -> None
     KeystrokesListener(Buffer, Delay)
-        clui_lib.console.keystroke_abc.InputBuffer -> None
+        clui_lib.console.keystroke_abc.InputBuffer, float -> None
     KeyboardListener(*, Delay = DEF_DELAY, StopKey = 'q')
-        /*, float/, str// -> None
+        /*, float, str/ -> None
 """
 
-__version__= '1.0.0.1'
-__date__ = '21-04-2023'
+__version__= '1.0.0.2'
+__date__ = '01-07-2026'
 __status__ = 'Testing'
 
 #imports
@@ -50,13 +50,17 @@ import time
 import termios
 import tty
 
-from typing import List, Union
+from typing import Union
 
 #+ other DO libraries
 
 from .keystroke_common import InputBuffer, ControlCode, ASCII_CONTROL_CODES
 
 #globals
+
+#types
+
+type TKeyStroke = Union[str, ControlCode]
 
 #+ supported terminal types
 
@@ -80,7 +84,7 @@ DEF_DELAY = 0.0001 #100 us - distinction between 2+ keystrokes and an escape
 
 #+ helper functions
 
-def SplitCharacters(Data: str) -> List[Union[str, ControlCode]]:
+def SplitCharacters(Data: str) -> list[TKeyStroke]:
     """
     Splits the input string, which may containg multiple Unicode printable
     characters and / or unprintable character (control codes), into a list of
@@ -112,7 +116,7 @@ def SplitCharacters(Data: str) -> List[Union[str, ControlCode]]:
             Result.append(Char)
     return Result
 
-def ParseEscapeSequence(Data: bytes) -> List[Union[str, ControlCode]]:
+def ParseEscapeSequence(Data: bytes) -> list[TKeyStroke]:
     """
     Splits the passed bytestring into a sequence of proper printable Unicode
     characters, 1-byte control codes and multiple bytes CSI escape sequences
@@ -144,7 +148,7 @@ def ParseEscapeSequence(Data: bytes) -> List[Union[str, ControlCode]]:
     while Data[Index] != 27:
         Index += 1
     if Index:
-        Temp = SplitCharacters(Data[:Index].decode('utf_8'))
+        Temp = SplitCharacters(Data[:Index].decode(encoding = 'utf-8'))
         Result.extend(Temp)
     Start = Index
     Index += 1
@@ -161,14 +165,16 @@ def ParseEscapeSequence(Data: bytes) -> List[Union[str, ControlCode]]:
             if 32 <= Escaped[1] < 127:
                 Result.append(f'Alt-{chr(Escaped[1])}')
                 if len(Escaped) > 2:
-                    Temp = SplitCharacters(Escaped[2:].decode('utf_8'))
+                    Temp = SplitCharacters(Escaped[2:].decode(
+                                                            encoding = 'utf-8'))
                     Result.extend(Temp)
             else:
                 for Index in range(len(Escaped) - 1, 1, -1):
                     Clipped = Escaped[:Index]
                     if Clipped in CSI_MAPPING:
                         Result.append(Clipped)
-                        Temp = SplitCharacters(Escaped[Index:].decode('utf_8'))
+                        Temp = SplitCharacters(Escaped[Index:].decode(
+                                                            encoding = 'utf-8'))
                         Result.extend(Temp)
                         break
         else:
@@ -213,7 +219,7 @@ def KeystrokesListener(Buffer: InputBuffer, Delay: float) -> None:
     This function is designed to be executed in a separate thread. It constantly
     tries to read as many characters as possible (available) from its internal
     buffer, which is also connected to a listener of the stdin stream, running
-    in a separate process. The received characters are split into the separate
+    in a separate thread. The received characters are split into the separate
     Unicode characters, control codes and escape control sequences. The later
     two are replaced by their symbolic representation. The results are placed
     into the output buffer (queue-like), which is passed as the argument.
@@ -229,7 +235,7 @@ def KeystrokesListener(Buffer: InputBuffer, Delay: float) -> None:
     read-out from the stdin.
     
     Signature:
-        clui_lib.console.keystroke_abc.InputBuffer -> None
+        clui_lib.console.keystroke_abc.InputBuffer, float -> None
     
     Args:
         Buffer: InputBuffer; a queue-like object serving as the data exchange
@@ -256,7 +262,7 @@ def KeystrokesListener(Buffer: InputBuffer, Delay: float) -> None:
                 else:
                     Buffer.put(Input)
             else:
-                Encoded = bytes(Input, 'utf-8')
+                Encoded = bytes(Input, encoding = 'utf-8')
                 if b'\x1b' in Encoded:
                     for Entry in ParseEscapeSequence(Encoded):
                         Buffer.put(Entry)
@@ -277,7 +283,7 @@ def KeyboardListener(*, Delay: float = DEF_DELAY, StopKey: str = 'q') -> None:
     termination upon pressing a specific key.
     
     Signature:
-        /*, float/, str// -> None
+        /*, float, str/ -> None
 
     Args:
         Delay: (keyword) float; delay in seconds between the successive pulls
@@ -307,8 +313,3 @@ def KeyboardListener(*, Delay: float = DEF_DELAY, StopKey: str = 'q') -> None:
     Buffer.empty()
     Listener.join()
     print('bye!')
-
-#testing and demonstration area - execution entry point
-
-if __name__ == '__main__':
-    KeyboardListener()

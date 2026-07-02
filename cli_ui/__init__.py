@@ -12,8 +12,8 @@ Modules:
         Indicator, etc.
 """
 
-__version__= '0.1.0.1'
-__date__ = '19-04-2023'
+__version__= '0.2.0.0'
+__date__ = '02-07-2026'
 __status__ = 'Developement'
 
 __all__ = ['line_widgets', 'base_view_classes']

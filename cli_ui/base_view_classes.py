@@ -45,7 +45,9 @@ import sys
 import os
 import abc
 
-from typing import Any, Optional
+from unicodedata import normalize
+
+from typing import Any, Optional, Union, ClassVar
 
 #+other libraries
 
@@ -60,6 +62,30 @@ if not (ROOT_FOLDER in sys.path):
 
 from introspection_lib.base_exceptions import UT_ValueError, UT_TypeError
 from introspection_lib.base_exceptions import UT_Exception
+
+from ..console.xterm_colours import ALL_ATTRIBUTES, MIN_INDEX, MAX_INDEX
+
+if os.name == 'posix':
+    from ..console.xterm_colours import Colorize
+    IS_POSIX = True
+else:
+    IS_POSIX = False
+
+#helper functions
+
+def ColorizeDummy(Data: Any, **kwargs) -> str:
+    """
+    Dummy replacement for clui_lib.console.xterm_colours.Colorize() function
+    in the case of non-posix OS, i.e without x-term. Simply converts the passed
+    value into a string and returns this string. All passed keyword arguments
+    are ignored.
+
+    Signature:
+        type A/, **kwargs/ -> str
+    """
+    return str(Data)
+
+ColorizeFunc = ColorizeDummy if not IS_POSIX else Colorize
 
 #classes
 
@@ -88,8 +114,72 @@ class CLUI_ABC(abc.ABC):
     def __init__(self, *args, **kwargs):
         """
         Stub to prevent instantiation.
+
+        Version 1.0.0.0
         """
         pass
+
+    #private helper methods
+
+    def _normalizeInput(self, InputString: str) -> str:
+        """
+        Normalizes the input unicode string using NFC form in order to be able
+        to judge the actual lenght in characters of the string printed into the
+        console.
+
+        Signature:
+            str -> str
+
+        Version 1.0.0.0
+        """
+        return normalize('NFC', InputString)
+    
+    def _parseKwargs(self,
+                        **kwargs) -> Union[None, dict[str, Union[int, bool]]]:
+        """
+        """
+        Settings = None
+        for Name, Value in kwargs.items():
+            if Name == 'Foreground' or Name == 'Background':
+                if not isinstance(Value, int):
+                    Error = UT_TypeError(1, int, SkipFrames = 1)
+                    Message = ' '.join([f'Keyword argument {Name} must be int',
+                                        f'- {type(Value)} is passed'])
+                    Error.setMessage(Message)
+                    raise Error
+                if Value > MAX_INDEX or Value < MIN_INDEX:
+                    Ranges = ' '.join([f'>={MIN_INDEX} and <={MAX_INDEX}',
+                                        f' - value of keyword argument {Name}'])
+                    raise UT_ValueError(Value, Ranges, SkipFrames = 1)
+                if Settings is None:
+                    Settings = dict()
+                Settings[Name] = Value
+            elif Name in ALL_ATTRIBUTES:
+                if Settings is None:
+                    Settings = dict()
+                Settings[Name] = bool(Value)
+            else:
+                Error = UT_TypeError(1, int, SkipFrames = 1)
+                Message = f'Unrecognized name of keyword argument {Name}'
+                Error.setMessage(Message)
+                raise Error
+        return Settings
+    
+    def _checkIfDecorated(self,
+                    Settings: Optional[dict[str, Union[int, bool]]]) -> bool:
+        """
+        """
+        if (not IS_POSIX) or (Settings is None):
+            Result = False
+        else:
+            if ('Foreground' in Settings) or ('Background' in Settings):
+                Result = True
+            elif any(Settings.values()):
+                Result = True
+            else:
+                Result = False
+        return Result
+
 
     #public instance methods
 
@@ -301,18 +391,18 @@ class TextLabel(HWidget_ABC):
         getStringValue():
             None -> str
     
-    Version 1.1.0.1
+    Version 1.2.0.0
     """
 
     #special methods
 
     def __init__(self, Value: Any, *, Width: Optional[int] = None,
-                                        Alignment: str = 'l') -> None:
+                                        Alignment: str = 'l', **kwargs) -> None:
         """
         Initializer. Creates and sets the instance attributes.
 
         Signature:
-            type A/, *, int OR None, str/ -> None
+            type A/, *, int OR None, str, **kwargs/ -> None
         
         Args:
             Value: type A; any value to be assigned as the internal state
@@ -321,15 +411,21 @@ class TextLabel(HWidget_ABC):
                 length of the string representation of the value + 1 character
             Alignment: (keyword) str; alignment of the text - one of the posible
                 values 'l', 'c' or 'r' case-insensitive
+            **kwargs: (keyword) **dict(str -> int OR bool); text decorators,
+                allowed Foreground, Background (0..255), BOLD, ITALIC, FAINT,
+                UNDERLINE, DOUBLE, STRIKE, HIDE, INVERSE (bool)
         
         Raises:
             UT_TypeError: passed Width argument is not an integer or None, OR
-                passed Alignment is not a string
+                passed Alignment is not a string, OR unrecognized keyword
+                argument for text decoration is passed, OR non-integer value
+                is passed for the background or foreground colour
             UT_ValueError: passed Width argument is integer but not positive, OR
                 passed Alignment is not of 'l', 'c' or 'r' case-insensitive
-                values
+                values, OR integer value outside of 0..255 range is passed for
+                the background or foreground colour
 
-        Version 1.0.1.0
+        Version 2.0.0.0
         """
         if isinstance(Alignment, str):
             if Alignment.lower() in ['c', 'l', 'r']:
@@ -342,7 +438,7 @@ class TextLabel(HWidget_ABC):
         if isinstance(Width, int) and Width > 0:
             _Width = Width
         else:
-            _Width = len(str(Value)) + 1
+            _Width = len(self._normalizeInput(str(Value))) + 1
         try:
             super().__init__(Value, Width = _Width)
         except UT_TypeError as err:
@@ -353,6 +449,10 @@ class TextLabel(HWidget_ABC):
             NewError = UT_ValueError(1, 'whatever', SkipFrames = 1)
             NewError.setMessage(err1.getMessage())
             raise NewError from None
+        if len(kwargs):
+            self._Settings = self._parseKwargs(**kwargs)
+        else:
+            self._Settings = None
     
     #public API
 
@@ -391,21 +491,35 @@ class TextLabel(HWidget_ABC):
     
     #++ instance methods
 
-    def setValue(self, Value: Any) -> None:
+    def setValue(self, Value: Any, **kwargs) -> None:
         """
         Method to set the internal state (value) of a widget. The passed value
         is converted into a string. It does not refresh the representation. Use
         method update() to refresh.
 
         Signature:
-            type A -> None
+            type A/, **kwargs/ -> None
         
         Args:
             Value: type A; any value to store as a string
+            **kwargs: (keyword) **dict(str -> int OR bool); text decorators,
+                allowed Foreground, Background (0..255), BOLD, ITALIC, FAINT,
+                UNDERLINE, DOUBLE, STRIKE, HIDE, INVERSE (bool)
         
-        Version 1.0.0.0
+        Raises:
+            UT_TypeError: Unrecognized keyword argument for text decoration is
+                passed, OR non-integer value is passed for the background or
+                foreground colour
+            UT_ValueError: Integer value outside of 0..255 range is passed for
+                the background or foreground colour
+        
+        Version 2.0.0.0
         """
-        self._Value = str(Value)
+        self._Value = self._normalizeInput(str(Value))
+        if len(kwargs):
+            self._Settings = self._parseKwargs(**kwargs)
+        else:
+            self._Settings = None
     
     def getStringValue(self) -> str:
         """
@@ -427,14 +541,16 @@ class TextLabel(HWidget_ABC):
         Length = len(Result)
         ExtraSpaces = self.Width - Length
         if ExtraSpaces:
-            LeftPositions = ExtraSpaces if self.Alignment == 'l' else 0
-            RightPositions = ExtraSpaces if self.Alignment == 'r' else 0
+            LeftPositions = ExtraSpaces if self.Alignment == 'r' else 0
+            RightPositions = ExtraSpaces if self.Alignment == 'l' else 0
             if self.Alignment == 'c':
                 LeftPositions = ExtraSpaces // 2
                 RightPositions = ExtraSpaces - LeftPositions
             LeftSpaces = ' ' * LeftPositions
             RightSpaces = ' ' * RightPositions
             Result = f'{LeftSpaces}{Result}{RightSpaces}'
+        if self._checkIfDecorated(self._Settings):
+            Result = ColorizeFunc(Result, **self._Settings)
         return Result
 
 class BarControl_ABC(HWidget_ABC):
@@ -655,6 +771,10 @@ class ScalableWidth:
     Version 1.0.0.1
     """
 
+    #deafult min width as class variable
+
+    _MinWidth: ClassVar[int] = 5
+
     #public API
 
     #+ properties
@@ -699,7 +819,6 @@ class ScalableWidth:
         else:
             raise UT_TypeError(Width, int, SkipFrames = 1)
         self._Width = Width
-
 
 class SliderVW(Slider, ScalableWidth):
     """
@@ -809,12 +928,12 @@ class TextLabelVW(TextLabel, ScalableWidth):
     #special methods
 
     def __init__(self, Value: Any, *, Width: Optional[int] = None,
-                                        Alignment: str  = 'l') -> None:
+                            Alignment: str  = 'l', **kwargs) -> None:
         """
         Initializer. Creates and sets the instance attributes.
 
         Signature:
-            type A/, *, int OR None, str/ -> None
+            type A/, *, int OR None, str, **kwargs/ -> None
         
         Args:
             Value: type A; any value to be assigned as the internal state
@@ -823,39 +942,39 @@ class TextLabelVW(TextLabel, ScalableWidth):
                 length of the string representation of the value + 1 character
             Alignment: (keyword) str; alignment of the text - one of the posible
                 values 'l', 'c' or 'r' case-insensitive
+            **kwargs: (keyword) **dict(str -> int OR bool); text decorators,
+                allowed Foreground, Background (0..255), BOLD, ITALIC, FAINT,
+                UNDERLINE, DOUBLE, STRIKE, HIDE, INVERSE (bool)
         
         Raises:
             UT_TypeError: passed Width argument is not an integer or None, OR
-                passed Alignment is not a string
+                passed Alignment is not a string, OR unrecognized keyword
+                argument for text decoration is passed, OR non-integer value
+                is passed for the background or foreground colour
             UT_ValueError: passed Width argument is integer but not positive, OR
                 passed Alignment is not of 'l', 'c' or 'r' case-insensitive
-                values
+                values, OR integer value outside of 0..255 range is passed for
+                the background or foreground colour
 
         Version 1.0.0.1
         """
         self._Value = None
-        self.setValue(Value)
-        if isinstance(Width, int):
+        InputLen = len(self._normalizeInput(str(Value)))
+        if Width is None:
+            _Width = max(self.MinWidth, InputLen)
+        elif isinstance(Width, int):
             if Width >= self.MinWidth:
-                self._Width = Width
+                _Width = max(Width, InputLen)
             else:
                 ErrorMessage = '> {} - widget`s width in characters'.format(
                                                             self.MinWidth - 1)
                 raise UT_ValueError(Width, ErrorMessage, SkipFrames = 1)
-        elif not (Width is None):
-            raise UT_TypeError(Width, int, SkipFrames = 1)
-        if isinstance(Alignment, str):
-            if Alignment.lower() in ['c', 'l', 'r']:
-                self._Alignment = Alignment.lower()
-            else:
-                ErrorMessage = "in values ['c', 'l', 'r'] case-insensitive"
-                raise UT_ValueError(Alignment, ErrorMessage, SkipFrames = 1)
-        else:
-            raise UT_TypeError(Alignment, str, SkipFrames = 1)
+        
+        super().__init__(Value, Width = _Width, Alignment = Alignment, **kwargs)
     
     #public instance methods
 
-    def setValue(self, Value: Any) -> None:
+    def setValue(self, Value: Any, **kwargs) -> None:
         """
         Method to set the internal state (value) of a widget. The passed value
         is converted into a string. It does not refresh the representation. Use
@@ -867,15 +986,29 @@ class TextLabelVW(TextLabel, ScalableWidth):
         
         Args:
             Value: type A; any value to store as a string
+            **kwargs: (keyword) **dict(str -> int OR bool); text decorators,
+                allowed Foreground, Background (0..255), BOLD, ITALIC, FAINT,
+                UNDERLINE, DOUBLE, STRIKE, HIDE, INVERSE (bool)
+        
+        Raises:
+            UT_TypeError: Unrecognized keyword argument for text decoration is
+                passed, OR non-integer value is passed for the background or
+                foreground colour
+            UT_ValueError: Integer value outside of 0..255 range is passed for
+                the background or foreground colour
         
         Version 1.0.0.1
         """
         if not (self._Value is None):
             self.clear()
-        _Value = str(Value)
+        _Value = self._normalizeInput(str(Value))
         self._Value = _Value
-        self._MinWidth = len(_Value) + 1
-        self._Width = len(_Value) + 1
+        self._MinWidth = max(len(_Value) + 1, self.__class__._MinWidth)
+        self._Width = max(len(_Value) + 1, self._MinWidth)
+        if len(kwargs):
+            self._Settings = self._parseKwargs(**kwargs)
+        else:
+            self._Settings = None
 
 class HContainer(CLUI_ABC):
     """

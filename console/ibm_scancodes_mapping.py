@@ -1,4 +1,3 @@
-#usr/bin/python3
 """
 Module clui_lib.console.ibm_scancodes_mapping
 

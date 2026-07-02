@@ -1,4 +1,3 @@
-#usr/bin/python3
 """
 Module clui_lib.console.xterm_new_mapping
 

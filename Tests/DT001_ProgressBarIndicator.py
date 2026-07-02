@@ -1,8 +1,7 @@
-#usr/bin/python3
 """
 Module clui_lib.Tests.DT001_ProgressBarIndicator
 
-Demonstratin test of the class ProgressBarIndicator defined in the module
+Demonstration test of the class ProgressBarIndicator defined in the module
 clui_lib.cli_ui.line_widgets.
 
 Demonstrates the proper scaling / sizing of the compound widget consisting of

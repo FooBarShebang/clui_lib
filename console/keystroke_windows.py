@@ -1,4 +1,3 @@
-#usr/bin/python3
 """
 Module clui_lib.console.keystroke_windows
 
@@ -9,6 +8,12 @@ Based upon the ideas from
         Danny Yo & Stephen Chappell (http://code.activestate.com/recipes/134892)
     * https://code.activestate.com/
         recipes/197140-key-press-detection-for-windows-text-only-console-/
+
+Functions:
+    KeystrokesListener(Buffer)
+        clui_lib.console.keystroke_abc.InputBuffer -> None
+    KeyboardListener(*, StopKey = 'q')
+        /*, str/ -> None
 """
 
 __version__= '1.0.0.0'
@@ -41,6 +46,20 @@ from .ibm_scancodes_mapping import ASCII_CONTROL_MAPPING, IBM_SC_MAPPING
 
 def KeystrokesListener(Buffer: InputBuffer) -> None:
     """
+    This function is designed to be executed in a separate thread. It uses low
+    level console I/O API of MS VC++ runtime - msvcrt - to detect a keystroke
+    and pull a wide character (Unicode) from the console's buffer.
+    
+    The process is terminated after the output buffer is deactivated.
+    
+    Signature:
+        clui_lib.console.keystroke_abc.InputBuffer -> None
+    
+    Args:
+        Buffer: InputBuffer; a queue-like object serving as the data exchange
+            output buffer as well as to signal the function to terminate
+    
+    Version 1.0.0.0
     """
     while Buffer.IsActive:
         if msvcrt.kbhit():
@@ -64,6 +83,19 @@ def KeystrokesListener(Buffer: InputBuffer) -> None:
 
 def KeyboardListener(*, StopKey: str = 'q') -> None:
     """
+    This function serves only for the demonstration and self-testing purposes.
+    It illustrates how the keystrokes listener function can be used by
+    implementing a simple indefinite events processing loop with the conditional
+    termination upon pressing a specific key.
+    
+    Signature:
+        /*, str/ -> None
+
+    Args:
+        StopKey: (keyword) str; key or a combination of keys (Ctrl, Alt, Shift
+            + another key) signaling to exit the loop
+    
+    Version 1.0.0.0
     """
     print('starting the listening process, press "{}" to exit'.format(StopKey))
     Buffer = InputBuffer()
@@ -83,8 +115,3 @@ def KeyboardListener(*, StopKey: str = 'q') -> None:
     Buffer.empty()
     Listener.join()
     print('bye!')
-
-#testing and demonstration area - execution entry point
-
-if __name__ == '__main__':
-    KeyboardListener()
