@@ -1,4 +1,3 @@
-#usr/bin/python3
 """
 Module clui_lib.base_view_classes
 
@@ -33,8 +32,8 @@ Classes:
         into a single line representation in the text console
 """
 
-__version__= '1.0.1.1'
-__date__ = '21-04-2023'
+__version__= '1.1.0.0'
+__date__ = '02-07-2026'
 __status__ = 'Development'
 
 #imports
@@ -64,6 +63,8 @@ from introspection_lib.base_exceptions import UT_ValueError, UT_TypeError
 from introspection_lib.base_exceptions import UT_Exception
 
 from ..console.xterm_colours import ALL_ATTRIBUTES, MIN_INDEX, MAX_INDEX
+
+from .widgets_decorators import ProgressBarDecoratorSimple
 
 if os.name == 'posix':
     from ..console.xterm_colours import Colorize
@@ -584,7 +585,7 @@ class BarControl_ABC(HWidget_ABC):
 
     #private class attributes
 
-    _MinWidth: int = 5
+    _MinWidth: ClassVar[int] = 5
 
     #special methods
 
@@ -659,7 +660,7 @@ class BarControl_ABC(HWidget_ABC):
                 ErrorMessage = 'in the range [0.0, 1.0] inclusively'
                 raise UT_ValueError(Value, ErrorMessage, SkipFrames = 1)
         else:
-            raise UT_TypeError(Value, int)
+            raise UT_TypeError(Value, (int, float))
         self._Value = float(Value)
 
 class Slider(BarControl_ABC):
@@ -730,9 +731,37 @@ class ProgressBar(BarControl_ABC):
             0.0 <= float <= 1.0 -> None
         getStringValue():
             None -> str
+        setStyle(Style):
+            type type A -> None
     
-    Version 1.1.0.1
+    Version 1.2.0.0
     """
+
+    def __init__(self, Value: float, *, Width: int = 5,
+                            Style: type = ProgressBarDecoratorSimple) -> None:
+        """
+        Initializer. Creates and sets the instance attributes.
+
+        Signature:
+            0.0 <= float <= 1.0 /, *, int > 4, type type A/ -> None
+        
+        Args:
+            Value: 0.0 <= float <= 1.0; the internal state
+            Width: (keyword) int > 4; width of the widget's representation in
+                characters; if not provided, the width is set to 5
+            Style: (keyword) type type A; decorators stored in nested
+                struct-like classes as class attributes
+        
+        Raises:
+            UT_TypeError: passed Width argument is not an integer or None, OR
+                passed Value is not a floating point number
+            UT_ValueError: passed Width argument is integer but not positive, OR
+                passed Value is not within [0.0, 1.0] range inclusively
+
+        Version 1.0.0.0
+        """
+        super().__init__(Value, Width = Width)
+        self.setStyle(Style)
 
     #public instance methods
 
@@ -747,10 +776,40 @@ class ProgressBar(BarControl_ABC):
         """
         BarWidth = self.Width - 2
         Position = int(self.Value * BarWidth)
-        Filled = '#' * Position
-        Unfilled = ' ' * (BarWidth - Position) if Position < BarWidth else ''
-        Result = f'[{Filled}{Unfilled}]'
+        Filled = self._Full * Position
+        Unfilled= self._Empty*(BarWidth-Position) if Position < BarWidth else ''
+        Result = f'{self._Left}{Filled}{Unfilled}{self._Right}'
         return Result
+    
+    def setStyle(self, Style: type) -> None:
+        """
+        Changes the visual elements of the Bar widget, see widgets_decorators
+        module.
+
+        Signature:
+            type type A -> None
+        
+        Args:
+            Style: type type A; decorators stored in nested struct-like classes
+                as class attributes
+        
+        Version 1.0.0.0
+        """
+        #todo - check validity of Style
+        Full = Style.Bar.Full
+        Empty = Style.Bar.Empty
+        Left = Style.Edges.Left
+        Right = Style.Edges.Right
+        EdgeFG = Style.Edges.Foreground
+        EdgeBG = Style.Edges.Background
+        self._Full = ColorizeFunc(self._normalizeInput(Full.Symbol),
+                Foreground = Full.Foreground, Background = Full.Background)
+        self._Empty = ColorizeFunc(self._normalizeInput(Empty.Symbol),
+                Foreground = Empty.Foreground, Background = Empty.Background)
+        self._Left = ColorizeFunc(self._normalizeInput(Left),
+                                    Foreground = EdgeFG, Background = EdgeBG)
+        self._Right = ColorizeFunc(self._normalizeInput(Right),
+                                    Foreground = EdgeFG, Background = EdgeBG)
 
 class ScalableWidth:
     """
@@ -880,6 +939,8 @@ class ProgressBarVW(ProgressBar, ScalableWidth):
             int >= MinWidth -> None
         getStringValue():
             None -> str
+        setStyle(Style):
+            type type A -> None
     
     Version 1.0.0.0
     """

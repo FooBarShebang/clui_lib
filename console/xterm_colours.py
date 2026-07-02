@@ -177,7 +177,7 @@ def Colorize(Data: Any, *, Foreground: Optional[int] = None,
     code is added to the end, if any colour or atribute were altered.
 
     The recognized attribute names are: BOLD, ITALIC, FAINT, UNDERLINE, DOUBLE,
-    STRIKE, HIDE.
+    STRIKE, HIDE, INVERSE.
 
     Signature:
         type A/, *, int OR None, int OR None, dict(str -> bool)/ -> str

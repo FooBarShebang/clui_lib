@@ -32,6 +32,8 @@ if not (ROOT_FOLDER in sys.path):
 
 from .base_view_classes import HContainer, ProgressBarVW, TextLabel
 
+from .widgets_decorators import ProgressBarDecoratorSimple
+
 from introspection_lib.base_exceptions import UT_ValueError, UT_TypeError
 
 #classes
@@ -72,6 +74,8 @@ class ProgressBarIndicator:
             int > 0 -> None
         getStringValue():
             None -> str
+        setStyle(Style):
+            type type A -> None
     
     Version 1.0.0.1
     """
@@ -79,14 +83,15 @@ class ProgressBarIndicator:
     #special methods
 
     def __init__(self, Range: int, *, Value: int = 0, ShowCounter: bool = True,
-                            ShowPercents: bool = True, Width: int = 80) -> None:
+                            ShowPercents: bool = True, Width: int = 80,
+                            Style: type = ProgressBarDecoratorSimple) -> None:
         """
         Initialization. Sets the intial values of the counter, max range and
         the width of the widget. The visual representation will not be printed
         out until the method start() is called.
 
         Signature:
-            int > 0 /,*, int >= 0, bool, bool, int > 0/ -> None
+            int > 0 /,*, int >= 0, bool, bool, int > 0, type type A/ -> None
         
         Args:
             Range: int > 0; the maximum count, the upper bound of the range of
@@ -149,7 +154,7 @@ class ProgressBarIndicator:
         else:
             self._Percents = None
         self._IsActive = False
-
+        self.setStyle(Style)
 
     #private helper methods
 
@@ -432,3 +437,21 @@ class ProgressBarIndicator:
             DisplayValue = '{}%'.format((100 * self.Value) // self.Range)
             self._Percents.setValue(DisplayValue)
         return self._Indicator.getStringValue()
+    
+    def setStyle(self, Style: type) -> None:
+        """
+        Changes the visual elements of the Bar widget, see widgets_decorators
+        module. Updates the view if the widget is running.
+
+        Signature:
+            type type A -> None
+        
+        Args:
+            Style: type type A; decorators stored in nested struct-like classes
+                as class attributes
+        
+        Version 1.0.0.0
+        """
+        #todo - check validity of Style
+        self._PBar.setStyle(Style)
+        self._show()
