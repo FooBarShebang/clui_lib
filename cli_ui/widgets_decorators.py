@@ -109,7 +109,7 @@ class SliderWidgetDecoratorSimple:
     """
     Complete set of definitions of Slider Widget 'graphical' elements
     """
-    Edges: ClassVar[type] = SquareEdgesSimple
+    Edges: ClassVar[type] = AngularEdgesSimple
     Slider: ClassVar[type] = SliderDecoratorSimple
 
 class ProgressBarDecoratorSimple:

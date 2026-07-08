@@ -13,7 +13,7 @@ Modules:
 """
 
 __version__= '0.2.0.0'
-__date__ = '02-07-2026'
+__date__ = '08-07-2026'
 __status__ = 'Developement'
 
 __all__ = ['line_widgets', 'base_view_classes']

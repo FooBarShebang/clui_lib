@@ -6,10 +6,11 @@ Implements a number of configurable, multiple components, single line widgets.
 
 Classes:
     ProgressBarIndicator
+    SliderControlIndicator
 """
 
-__version__= '1.0.0.1'
-__date__ = '21-04-2023'
+__version__= '1.1.0.0'
+__date__ = '08-07-2026'
 __status__ = 'Development'
 
 #imports
@@ -30,9 +31,10 @@ if not (ROOT_FOLDER in sys.path):
 
 #++ actual imports
 
-from .base_view_classes import HContainer, ProgressBarVW, TextLabel
+from .base_view_classes import HContainer, ProgressBarVW, TextLabel, SliderVW
 
 from .widgets_decorators import ProgressBarDecoratorSimple
+from .widgets_decorators import SliderWidgetDecoratorSimple
 
 from introspection_lib.base_exceptions import UT_ValueError, UT_TypeError
 
@@ -77,7 +79,7 @@ class ProgressBarIndicator:
         setStyle(Style):
             type type A -> None
     
-    Version 1.0.0.1
+    Version 1.1.0.0
     """
 
     #special methods
@@ -106,8 +108,15 @@ class ProgressBarIndicator:
             Width: (keyword) int; the width of the widget in characters, but it
                 must be enough to fit the progress bar and the 
                 defaults to 80
+            Style: type type A; decorators stored in nested struct-like classes
+                as class attributes
         
-        Version 1.0.0.1
+        Raises:
+            UT_TypeError: Range, Value or Width arguments are not integers
+            UT_ValueError: Range, Value or Width arguments are outside their
+                bounds
+        
+        Version 1.1.0.0
         """
         if isinstance(Range, int):
             if Range <= 0:
@@ -455,3 +464,328 @@ class ProgressBarIndicator:
         #todo - check validity of Style
         self._PBar.setStyle(Style)
         self._show()
+
+class SliderControlIndicator:
+    """
+    Command line slider control indicator with label and optional current value
+    indicator. This implementation is not re-usable, i.e. a new instance of this
+    class should be used for each new task. The method update() must be called
+    manually to show the widget the first time as well as to update its
+    representation after any chnages.
+
+    Attributes:
+        Range: (read-only property) int > 0 ; the maximum value of the internal
+            counter, representing the right-most position of the slider`s gauge
+        Value: (read-only property) int >= 0; the current value of the internal
+            counter
+        Width: (read-only property) int > 0; the current width of the widget
+    
+    Methods:
+        inc():
+            None -> None
+        dec():
+            None -> None
+        inc10p():
+            None -> None
+        dec10p():
+            None -> None
+        setValue(Value):
+            int >= 0 -> None
+        setWidth(Width):
+            int > 0 -> None
+        getStringValue():
+            None -> str
+        setStyle(Style):
+            type type A -> None
+        update():
+            None -> None
+    
+    Version 1.0.0.0
+    """
+
+    #special methods
+
+    def __init__(self, Label: str, Range: int, *, Value: int = 0,
+                            ShowValue: bool = True, Width: int = 80,
+                            Style: type = SliderWidgetDecoratorSimple) -> None:
+        """
+        Initialization. Sets the intial values of the counter, max range and
+        the width of the widget. The visual representation will not be printed
+        out until the method start() is called.
+
+        Signature:
+            str, int > 0 /,*, int >= 0, bool, int > 0, type type A/ -> None
+        
+        Args:
+            Label: str; text label to the left of the slider control
+            Range: int > 0; the maximum count, the upper bound of the range of
+                the non-negative integers acceptable as the control's value,
+                i.e. the right-most, maximum value position
+            Value: (keyword) int >= 0; the initial state of the control, cannot
+                exceed the Range value, defaults to 0
+            ShowValue: (keyword) bool; flag if the current value should be shown
+                explicitely to the right from the slider, defaults to True
+            Width: (keyword) int; the width of the widget in characters, but it
+                must be enough to fit the progress bar and the 
+                defaults to 80
+            Style: type type A; decorators stored in nested struct-like classes
+                as class attributes
+        
+        Raises:
+            UT_TypeError: Range, Value or Width arguments are not integers
+            UT_ValueError: Range, Value or Width arguments are outside their
+                bounds
+        
+        Version 1.0.0.0
+        """
+        if isinstance(Range, int):
+            if Range <= 0:
+                ErrorMessage = '> 0 - maximum value, i.e. range'
+                raise UT_ValueError(Range, ErrorMessage, SkipFrames = 1)
+            self._Range = Range
+        else:
+            raise UT_TypeError(Range, int, SkipFrames = 1)
+        if isinstance(Value, int):
+            if (Value < 0) or (Value > self.Range):
+                ErrorMessage = f'0 <= value <= {self.Range} - current value'
+                raise UT_ValueError(Value, ErrorMessage, SkipFrames = 1)
+            self._Value = Value
+        else:
+            raise UT_TypeError(Value, int, SkipFrames = 1)
+        MinWidth = (len(str(Label)) + 1) + 5
+        #minimum for the label and slider
+        if ShowValue:
+            MinWidth += (len(str(Range)) + 1) #minimum for value indicator
+        if isinstance(Width, int):
+            if (Width >= MinWidth):
+                self._Width = Width
+            else:
+                ErrorMessage = f'>= {MinWidth} - widget`s width in characters'
+                raise UT_ValueError(Width, ErrorMessage, SkipFrames = 1)
+        else:
+            raise UT_TypeError(Width, int, SkipFrames = 1)
+        self._Indicator = HContainer(Width = self.Width)
+        self._Indicator.addWidget(TextLabel(Label))
+        self._Slider = SliderVW(0)
+        self._Indicator.addWidget(self._Slider)
+        if ShowValue:
+            self._Counter = TextLabel(str(self.Value),
+                                                Width = (len(str(Range)) + 1),
+                                                                Alignment = 'r')
+            self._Indicator.addWidget(self._Counter)
+        else:
+            self._Counter = None
+        self.setStyle(Style)
+
+    #+ properties
+
+    @property
+    def Width(self) -> int:
+        """
+        Read-only property to access the current width of the widget.
+
+        Signature:
+            None -> int > 0
+        
+        Version 1.0.0.0
+        """
+        return self._Width
+    
+    @property
+    def Value(self) -> int:
+        """
+        Read-only property to access the current internal counter's value of the
+        widget.
+
+        Signature:
+            None -> int >= 0
+        
+        Version 1.0.0.0
+        """
+        return self._Value
+    
+    @property
+    def Range(self) -> int:
+        """
+        Read-only property to access the maximum allowed internal counter's
+        value of the widget.
+
+        Signature:
+            None -> int > 0
+        
+        Version 1.0.0.0
+        """
+        return self._Range
+    
+    #+ instance methods
+    
+    def inc(self) -> None:
+        """
+        Short-cut to increase the internal counter by 1, however it will never
+        go above the Range.
+
+        Signature:
+            None -> None
+        
+        Version 1.0.0.1
+        """
+        Value = self.Value
+        if Value < self.Range:
+            self.setValue(Value + 1)
+    
+    def dec(self) -> None:
+        """
+        Short-cut to decrease the internal counter by 1, however it will never
+        go below zero.
+
+        Signature:
+            None -> None
+        
+        Version 1.0.0.1
+        """
+        Value = self.Value
+        if Value > 0:
+            self.setValue(Value - 1)
+    
+    def inc10p(self) -> None:
+        """
+        Short-cut to increase the internal counter by 10% of the full range,
+        however it will never go above the Range.
+
+        Signature:
+            None -> None
+        
+        Version 1.0.0.1
+        """
+        Value = self.Value
+        Range = self.Range
+        NewValue =  Value + int(Range / 10)
+        if NewValue > Range:
+            NewValue = Range
+        self.setValue(NewValue)
+    
+    def dec10p(self) -> None:
+        """
+        Short-cut to decrease the internal counter by 10% of the full range,
+        however it will never go below zero.
+
+        Signature:
+            None -> None
+        
+        Version 1.0.0.1
+        """
+        Value = self.Value
+        Range = self.Range
+        NewValue =  Value - int(Range / 10)
+        if NewValue < 0:
+            NewValue = 0
+        self.setValue(NewValue)
+    
+    def setValue(self, Value: int) -> None:
+        """
+        Explicitely changes the value of the internal counter. Updates the view
+        if the widget is running.
+
+        Signature:
+            int >= 0 -> None
+        
+        Args:
+            Value: 0 <= int <= Range; required value of the internal counter,
+                cannot be negative or above the current range
+        
+        Raises:
+            UT_TypeError: argument is not an integer
+            UT_ValueError: argument is an integer but outside the allowed values
+                range
+        
+        Version 1.0.0.1
+        """
+        if isinstance(Value, int):
+            if (Value < 0) or (Value > self.Range):
+                ErrorMessage = f'0 <= value <= {self.Range} - current value'
+                raise UT_ValueError(Value, ErrorMessage, SkipFrames = 1)
+        else:
+            raise UT_TypeError(Value, int, SkipFrames = 1)
+        self._Value = Value
+    
+    def setWidth(self, Width: int) -> None:
+        """
+        Changes the current width of the widget. Updates the view if the widget
+        is running.
+
+        Signature:
+            int > 0 -> None
+        
+        Args:
+            Width: int > 0; the desired width of the widget in characters,
+                cannot be less than the minimum space required to fit all
+                stacked eleements
+        
+        Raises:
+            UT_TypeError: argument is not an integer
+            UT_ValueError: argument is an integer but smaller than the minimum
+                required space
+        
+        Version 1.0.0.1
+        """
+        MinWidth = self._Indicator.MinWidth
+        if isinstance(Width, int):
+            if Width < MinWidth:
+                ErrorMessage = f'>= {MinWidth} - minimum width'
+                raise UT_ValueError(Width, ErrorMessage, SkipFrames = 1)
+        else:
+            raise UT_TypeError(Width, int, SkipFrames = 1)
+        self._Width = Width
+        self._Indicator.setWidth(Width)
+    
+    def getStringValue(self) -> str:
+        """
+        Returns the string representation of the internal state formed depending
+        on the included widgets. Basically, exactly the same string will be
+        printed into the console when the state of the active / running widget
+        is changed.
+
+        Signature:
+            None -> str
+        
+        Returns:
+            str: representation of the state of the widget to be printed out
+        
+        Version 1.0.0.1
+        """
+        Value = self.Value
+        Range = self.Range
+        if Value < Range:
+            Position = Value / Range
+        else:
+            Position = 1
+        self._Slider.setValue(Position)
+        if not (self._Counter is None):
+            self._Counter.setValue(str(Value))
+        return self._Indicator.getStringValue()
+    
+    def setStyle(self, Style: type) -> None:
+        """
+        Changes the visual elements of the Bar widget, see widgets_decorators
+        module. Updates the view if the widget is running.
+
+        Signature:
+            type type A -> None
+        
+        Args:
+            Style: type type A; decorators stored in nested struct-like classes
+                as class attributes
+        
+        Version 1.0.0.0
+        """
+        #todo - check validity of Style
+        self._Slider.setStyle(Style)
+
+    def update(self) -> None:
+        """
+        Prints out / updates the widget representation.
+
+        Version 1.0.0.0
+        """
+        self.getStringValue() #forces the current values into sub-widgets
+        self._Indicator.update()

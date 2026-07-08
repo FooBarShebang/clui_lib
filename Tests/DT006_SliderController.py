@@ -1,7 +1,8 @@
 """
 Module clui_lib.Tests.DT006_SliderContorller
 
-Demonstration test for the module clui_lib.console.keystroke_posix.
+Demonstration test for the module clui_lib.cli_ui.line_widgtes, specifically -
+the class SliderControlIndicator.
 """
 
 __version__= '1.0.0.0'
@@ -36,7 +37,35 @@ else:
 
 from clui_lib.console.keystroke_common import ControlCode, InputBuffer
 
-from clui_lib.cli_ui.base_view_classes import SliderVW
+from clui_lib.cli_ui.line_widgets import SliderControlIndicator
+
+from clui_lib.cli_ui.widgets_decorators import SliderWidgetDecoratorSimple
+
+#helper classes
+
+class PipeEdgesBlue:
+    Left = '|'
+    Right = '|'
+    Foreground = 4
+    Background = None
+
+class SliderGaugeRed:
+    Symbol = ' '
+    Foreground = None
+    Background = 1
+
+class SliderLineGreen:
+    Symbol = '-'
+    Foreground = 2
+    Background = None
+
+class SliderDecoratorFancy:
+    Gauge = SliderGaugeRed
+    Line = SliderLineGreen
+
+class SliderWidgetDecoratorFancy:
+    Edges = PipeEdgesBlue
+    Slider = SliderDecoratorFancy
 
 #helper function
 
@@ -44,8 +73,10 @@ def KeyboardListener():
     StopKey = 'q'
     Delay = 0.0001
     print('starting the listening process, press "{}" to exit'.format(StopKey))
-    print('Press (arrow) KeyLEFT / KeyRIGHT to change the slider`s value')
+    print('Press (arrow) KeyLEFT / KeyRIGHT to change the slider`s value by 1')
+    print('Press PageUp / PageDown to change the slider`s value by 10%')
     print('Press (arrow) KeyUP / KeyDOWN to change the slider`s width')
+    print('Press Home / End to change the widget`s style')
     Buffer = InputBuffer()
     Buffer.activate()
     if IS_POSIX:
@@ -56,25 +87,37 @@ def KeyboardListener():
                                                             args = (Buffer, ))
     Listener.start()
     Key = ''
-    Widget = SliderVW(0.5, Width = 21)
-    Widget.show()
+    Widget = SliderControlIndicator('Ground control', 255, Value = 100,
+                                                                    Width = 40)
+    Widget.update()
     while Key != StopKey:
         if Buffer.IsNotEmpty:
             Key = Buffer.get()
             if not isinstance(Key, ControlCode):
-                CurrentValue = Widget.Value
                 CurrentWidth = Widget.Width
-                if Key == 'KeyLEFT' and CurrentValue >= 0.1:
-                    Widget.setValue(CurrentValue - 0.1)
+                if Key == 'KeyLEFT':
+                    Widget.dec()
                     Widget.update()
-                elif Key == 'KeyRIGHT' and CurrentValue <= 0.9:
-                    Widget.setValue(CurrentValue + 0.1)
+                elif Key == 'KeyRIGHT':
+                    Widget.inc()
+                    Widget.update()
+                elif Key == 'PageUp':
+                    Widget.inc10p()
+                    Widget.update()
+                elif Key == 'PageDown':
+                    Widget.dec10p()
                     Widget.update()
                 elif Key == 'KeyDOWN' and CurrentWidth >= 6:
                     Widget.setWidth(CurrentWidth - 1)
                     Widget.update()
                 elif Key == 'KeyUP' and CurrentWidth <= 79:
                     Widget.setWidth(CurrentWidth + 1)
+                    Widget.update()
+                elif Key == 'Home':
+                    Widget.setStyle(SliderWidgetDecoratorFancy)
+                    Widget.update()
+                elif Key == 'End':
+                    Widget.setStyle(SliderWidgetDecoratorSimple)
                     Widget.update()
     print('\nstoping the process, press any key')
     Buffer.deactivate()

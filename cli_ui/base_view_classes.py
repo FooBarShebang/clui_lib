@@ -33,7 +33,7 @@ Classes:
 """
 
 __version__= '1.1.0.0'
-__date__ = '02-07-2026'
+__date__ = '08-07-2026'
 __status__ = 'Development'
 
 #imports
@@ -65,6 +65,7 @@ from introspection_lib.base_exceptions import UT_Exception
 from ..console.xterm_colours import ALL_ATTRIBUTES, MIN_INDEX, MAX_INDEX
 
 from .widgets_decorators import ProgressBarDecoratorSimple
+from .widgets_decorators import SliderWidgetDecoratorSimple
 
 if os.name == 'posix':
     from ..console.xterm_colours import Colorize
@@ -686,9 +687,39 @@ class Slider(BarControl_ABC):
             0.0 <= float <= 1.0 -> None
         getStringValue():
             None -> str
+        setStyle(Style):
+            type type A -> None
     
-    Version 1.1.0.1
+    Version 1.2.0.0
     """
+
+    #special methods
+
+    def __init__(self, Value: float, *, Width: int = 5,
+                            Style: type = SliderWidgetDecoratorSimple) -> None:
+        """
+        Initializer. Creates and sets the instance attributes.
+
+        Signature:
+            0.0 <= float <= 1.0 /, *, int > 4, type type A/ -> None
+        
+        Args:
+            Value: 0.0 <= float <= 1.0; the internal state
+            Width: (keyword) int > 4; width of the widget's representation in
+                characters; if not provided, the width is set to 5
+            Style: (keyword) type type A; decorators stored in nested
+                struct-like classes as class attributes
+        
+        Raises:
+            UT_TypeError: passed Width argument is not an integer or None, OR
+                passed Value is not a floating point number
+            UT_ValueError: passed Width argument is integer but not positive, OR
+                passed Value is not within [0.0, 1.0] range inclusively
+
+        Version 1.0.0.0
+        """
+        super().__init__(Value, Width = Width)
+        self.setStyle(Style)
 
     #public instance methods
 
@@ -703,10 +734,41 @@ class Slider(BarControl_ABC):
         """
         BarWidth = self.Width - 2
         Position = 1 + int(self.Value * (BarWidth - 1))
-        LeftSpacer = '-' * (Position - 1) if Position > 1 else ''
-        RightSpacer = '-' * (BarWidth - Position) if Position < BarWidth else ''
-        Value = f'<{LeftSpacer}I{RightSpacer}>'
+        LS = self._Line
+        LeftSpacer = LS * (Position - 1) if Position > 1 else ''
+        RightSpacer = LS * (BarWidth - Position) if Position < BarWidth else ''
+        Value=f'{self._Left}{LeftSpacer}{self._Gauge}{RightSpacer}{self._Right}'
         return Value
+
+    def setStyle(self, Style: type) -> None:
+        """
+        Changes the visual elements of the Slider widget, see widgets_decorators
+        module.
+
+        Signature:
+            type type A -> None
+        
+        Args:
+            Style: type type A; decorators stored in nested struct-like classes
+                as class attributes
+        
+        Version 1.0.0.0
+        """
+        #todo - check validity of Style
+        Line = Style.Slider.Line
+        Gauge = Style.Slider.Gauge
+        Left = Style.Edges.Left
+        Right = Style.Edges.Right
+        EdgeFG = Style.Edges.Foreground
+        EdgeBG = Style.Edges.Background
+        self._Line = ColorizeFunc(self._normalizeInput(Line.Symbol),
+                Foreground = Line.Foreground, Background = Line.Background)
+        self._Gauge = ColorizeFunc(self._normalizeInput(Gauge.Symbol),
+                Foreground = Gauge.Foreground, Background = Gauge.Background)
+        self._Left = ColorizeFunc(self._normalizeInput(Left),
+                                    Foreground = EdgeFG, Background = EdgeBG)
+        self._Right = ColorizeFunc(self._normalizeInput(Right),
+                                    Foreground = EdgeFG, Background = EdgeBG)
 
 class ProgressBar(BarControl_ABC):
     """
@@ -907,8 +969,10 @@ class SliderVW(Slider, ScalableWidth):
             int >= MinWidth -> None
         getStringValue():
             None -> str
+        setStyle(Style):
+            type type A -> None
     
-    Version 1.0.0.0
+    Version 1.1.0.0
     """
 
 class ProgressBarVW(ProgressBar, ScalableWidth):
@@ -942,7 +1006,7 @@ class ProgressBarVW(ProgressBar, ScalableWidth):
         setStyle(Style):
             type type A -> None
     
-    Version 1.0.0.0
+    Version 1.1.0.0
     """
     pass
 
