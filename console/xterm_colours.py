@@ -18,7 +18,7 @@ Functions:
 
 __version__= '1.0.0.1'
 __date__ = '01-07-2026'
-__status__ = 'Development'
+__status__ = 'Production'
 
 #imports
 
@@ -40,7 +40,7 @@ from typing import Any, Optional
 #+ other DO libraries
 
 MODULE_FOLDER = os.path.dirname(os.path.realpath(__file__))
-LIB_FOLDER = os.path.dirname(MODULE_FOLDER)
+LIB_FOLDER = os.path.dirname(os.path.dirname(MODULE_FOLDER))
 ROOT_FOLDER = os.path.dirname(LIB_FOLDER)
 
 if not (ROOT_FOLDER in sys.path):

@@ -32,8 +32,8 @@ Classes:
         into a single line representation in the text console
 """
 
-__version__= '1.1.0.0'
-__date__ = '08-07-2026'
+__version__= '1.2.0.0'
+__date__ = '22-07-2026'
 __status__ = 'Development'
 
 #imports
@@ -46,12 +46,12 @@ import abc
 
 from unicodedata import normalize
 
-from typing import Any, Optional, Union, ClassVar
+from typing import Any, Optional, Union, ClassVar, final
 
 #+other libraries
 
 MODULE_PATH = os.path.realpath(__file__)
-LIB_FOLDER = os.path.dirname(MODULE_PATH)
+LIB_FOLDER =  os.path.dirname(os.path.dirname(MODULE_PATH))
 ROOT_FOLDER = os.path.dirname(LIB_FOLDER)
 
 if not (ROOT_FOLDER in sys.path):
@@ -84,10 +84,24 @@ def ColorizeDummy(Data: Any, **kwargs) -> str:
 
     Signature:
         type A/, **kwargs/ -> str
+    
+    Version 1.0.0.0
     """
     return str(Data)
 
 ColorizeFunc = ColorizeDummy if not IS_POSIX else Colorize
+
+def GetScreenWidth() -> int:
+    """
+    Returns the current width in symbols of the terminal window.
+
+    Siganture:
+        None -> int > 0
+    
+    Version 1.0.0.0
+    """
+    ScreenSize = os.get_terminal_size()
+    return ScreenSize.columns
 
 #classes
 
@@ -123,8 +137,11 @@ class CLUI_ABC(abc.ABC):
 
     #private helper methods
 
+    @final
     def _normalizeInput(self, InputString: str) -> str:
         """
+        Helper private method.
+
         Normalizes the input unicode string using NFC form in order to be able
         to judge the actual lenght in characters of the string printed into the
         console.
@@ -136,9 +153,28 @@ class CLUI_ABC(abc.ABC):
         """
         return normalize('NFC', InputString)
     
+    @final
     def _parseKwargs(self,
                         **kwargs) -> Union[None, dict[str, Union[int, bool]]]:
         """
+        Helper private method. Parses the (optional) keyword arguments defining
+        the text label's decorations and packes them into a single dictionary
+        object.
+
+        Signature:
+            /**dict(str -> type A)/ -> None OR dict(str -> int OR bool)
+
+        Returns:
+            None: there are no keyword arguments
+            dict(str -> int OR bool): dictionary of decorators
+        
+        Raises:
+            UT_TypeError: unrecognized decorator name OR non-integer value for
+                background or foreground colour decorator
+            UV_ValueError: value of background or foreground clour is outside of
+                256 colour-palette
+        
+        Version 1.0.0.0
         """
         Settings = None
         for Name, Value in kwargs.items():
@@ -167,9 +203,21 @@ class CLUI_ABC(abc.ABC):
                 raise Error
         return Settings
     
+    @final
     def _checkIfDecorated(self,
                     Settings: Optional[dict[str, Union[int, bool]]]) -> bool:
         """
+        Helper method. Checks is the text decorators must be applied,
+        specifically
+
+        * The OS is POSIX, AND
+        * Either background or foreground colour is specified OR any of the
+            font attributes (bold, italic, etc.) is set
+
+        Signature:
+            None OR dict(str -> int OR bool) -> bool
+
+        Version 1.0.0.0
         """
         if (not IS_POSIX) or (Settings is None):
             Result = False
@@ -181,7 +229,6 @@ class CLUI_ABC(abc.ABC):
             else:
                 Result = False
         return Result
-
 
     #public instance methods
 
@@ -212,6 +259,7 @@ class CLUI_ABC(abc.ABC):
         """
         pass
 
+    @final
     def show(self) -> None:
         """
         Method to print the current graphical representation of a widget.
@@ -224,6 +272,7 @@ class CLUI_ABC(abc.ABC):
         sys.stdout.write(self.getStringValue())
         sys.stdout.flush()
 
+    @final
     def update(self) -> None:
         """
         Method to erase the current and to print out the new graphical
@@ -324,7 +373,9 @@ class HWidget_ABC(CLUI_ABC):
     @property
     def Width(self) -> int:
         """
-        Read-only property to access the current width of a widget.
+        Read-only property to access the current width of a widget. Note, that
+        the actual displayed width may be less than this value if the terminal
+        width causes truncation.
 
         Signature:
             None -> int > 0
@@ -350,6 +401,7 @@ class HWidget_ABC(CLUI_ABC):
         """
         self._Value = Value
     
+    @final
     def clear(self) -> None:
         """
         Method to erase the current graphical representation of a widget.
@@ -359,7 +411,7 @@ class HWidget_ABC(CLUI_ABC):
         
         Version 1.0.0.1
         """
-        Filler = ' ' * self.Width
+        Filler = ' ' * min(self.Width, GetScreenWidth())
         sys.stdout.write(f'\r{Filler}\r')
         sys.stdout.flush()
 
@@ -380,6 +432,9 @@ class TextLabel(HWidget_ABC):
             the visual representation
         Alignment: (read-only property) str; the used text alignment - one of
             the values 'l', 'c' or 'r', meaning left, center or right
+        TruncationSymmetry: (read-only property) bool OR None; text truncation
+            method, None - simple tail truncation, False - tail truncation with
+            '...' added, True - middle part removal with '...' insertion
 
     Methods:
         clear():
@@ -393,18 +448,20 @@ class TextLabel(HWidget_ABC):
         getStringValue():
             None -> str
     
-    Version 1.2.0.0
+    Version 1.3.0.0
     """
 
     #special methods
 
     def __init__(self, Value: Any, *, Width: Optional[int] = None,
-                                        Alignment: str = 'l', **kwargs) -> None:
+                                        Alignment: str = 'l',
+                                        SymTrunc: Optional[bool] = None,
+                                        **kwargs) -> None:
         """
         Initializer. Creates and sets the instance attributes.
 
         Signature:
-            type A/, *, int OR None, str, **kwargs/ -> None
+            type A/, *, int OR None, str, bool OR None, **kwargs/ -> None
         
         Args:
             Value: type A; any value to be assigned as the internal state
@@ -413,6 +470,9 @@ class TextLabel(HWidget_ABC):
                 length of the string representation of the value + 1 character
             Alignment: (keyword) str; alignment of the text - one of the posible
                 values 'l', 'c' or 'r' case-insensitive
+            SymTrunc: (keyword) bool OR None; text trunction type, None - simple
+                tail truncation, False - tail truncation with '...' added,
+                True - middle part removal with '...' insertion
             **kwargs: (keyword) **dict(str -> int OR bool); text decorators,
                 allowed Foreground, Background (0..255), BOLD, ITALIC, FAINT,
                 UNDERLINE, DOUBLE, STRIKE, HIDE, INVERSE (bool)
@@ -437,7 +497,7 @@ class TextLabel(HWidget_ABC):
                 raise UT_ValueError(Alignment, ErrorMessage, SkipFrames = 1)
         else:
             raise UT_TypeError(Alignment, str, SkipFrames = 1)
-        if isinstance(Width, int) and Width > 0:
+        if isinstance(Width, int) and Width > 1:
             _Width = Width
         else:
             _Width = len(self._normalizeInput(str(Value))) + 1
@@ -451,6 +511,10 @@ class TextLabel(HWidget_ABC):
             NewError = UT_ValueError(1, 'whatever', SkipFrames = 1)
             NewError.setMessage(err1.getMessage())
             raise NewError from None
+        if not (SymTrunc is None):
+            self._SymTrunc = bool(SymTrunc)
+        else:
+            self._SymTrunc = None
         if len(kwargs):
             self._Settings = self._parseKwargs(**kwargs)
         else:
@@ -491,6 +555,23 @@ class TextLabel(HWidget_ABC):
         """
         return self._Alignment
     
+    @property
+    def TruncationSymmetry(self) -> Union[None, bool]:
+        """
+        Read-only property to access the used text trunction method.
+
+        Signature:
+            None -> None OR bool
+        
+        Returns:
+            None: simple trail trunctation method is used
+            bool: trunctation with '...' insertion is used, True - middle part
+                is removed, False - tail part is removed
+        
+        Version 1.0.0.0
+        """
+        return self._SymTrunc
+    
     #++ instance methods
 
     def setValue(self, Value: Any, **kwargs) -> None:
@@ -527,32 +608,47 @@ class TextLabel(HWidget_ABC):
         """
         Returnst the currently stored string with at least one space after it
         (for 'l' and 'c' alignments) or before it (for 'r' alignement). Too long
-        strings are truncated. The strings shorted than the width of the widget
-        - 1 character are padded with spaces either to the right ('l' alignment)
-        or to the left ('r' alignment) or from the both sides ('c' alignment).
+        strings are truncated. The text is also truncated if the widget doesn't
+        fit the terminal`s width.
+        
+        The strings shorter than the width of the widget - 1 character are
+        padded with spaces either to the right ('l' alignment) or to the left
+        ('r' alignment) or from the both sides ('c' alignment). Note, that one
+        space is always added to the right (for 'r' or 'c' alignment) or to the
+        left ('l' alignment)!
 
         Signature:
             None -> str
         
-        Version 2.0.0.0
+        Version 3.0.0.0
         """
-        if len(self.Value) < self.Width:
+        MaxWidth = min(self.Width, GetScreenWidth())
+        if len(self.Value) < MaxWidth:
             Result = self.Value
         else:
-            Result = self.Value[:(self.Width - 1)]
+            if (self.TruncationSymmetry is None) or self.Width < 6:
+                Result = self.Value[:(MaxWidth - 1)]
+            else:
+                if not self.TruncationSymmetry:
+                    Result = f'{self.Value[:(MaxWidth - 4)]}...'
+                else:
+                    BaseString = self.Value
+                    TextLength = len(BaseString)
+                    Left = (MaxWidth - 4) // 2
+                    Right = TextLength - Left
+                    Result = f'{BaseString[:Left]}...{BaseString[Right:]}'
         Length = len(Result)
-        ExtraSpaces = self.Width - Length
-        if ExtraSpaces:
-            LeftPositions = ExtraSpaces if self.Alignment == 'r' else 0
-            RightPositions = ExtraSpaces if self.Alignment == 'l' else 0
-            if self.Alignment == 'c':
-                LeftPositions = ExtraSpaces // 2
-                RightPositions = ExtraSpaces - LeftPositions
-            LeftSpaces = ' ' * LeftPositions
-            RightSpaces = ' ' * RightPositions
-            Result = f'{LeftSpaces}{Result}{RightSpaces}'
+        ExtraSpaces = MaxWidth - Length
+        LeftPositions = ExtraSpaces if self.Alignment == 'r' else 0
+        RightPositions = ExtraSpaces if self.Alignment == 'l' else 0
+        if self.Alignment == 'c':
+            LeftPositions = ExtraSpaces // 2
+            RightPositions = ExtraSpaces - LeftPositions
+        LeftSpaces = ' ' * LeftPositions
+        RightSpaces = ' ' * RightPositions
         if self._checkIfDecorated(self._Settings):
             Result = ColorizeFunc(Result, **self._Settings)
+        Result = f'{LeftSpaces}{Result}{RightSpaces}'
         return Result
 
 class BarControl_ABC(HWidget_ABC):
@@ -595,11 +691,11 @@ class BarControl_ABC(HWidget_ABC):
         Initializer. Creates and sets the instance attributes.
 
         Signature:
-            0.0 <= float <= 1.0 /, *, int > 4/ -> None
+            0.0 <= float <= 1.0 /, *, int > 2/ -> None
         
         Args:
             Value: 0.0 <= float <= 1.0; the internal state
-            Width: (keyword) int > 4; width of the widget's representation in
+            Width: (keyword) int > 2; width of the widget's representation in
                 characters; if not provided, the width is set to 5
         
         Raises:
@@ -690,7 +786,7 @@ class Slider(BarControl_ABC):
         setStyle(Style):
             type type A -> None
     
-    Version 1.2.0.0
+    Version 1.3.0.0
     """
 
     #special methods
@@ -730,12 +826,13 @@ class Slider(BarControl_ABC):
         Signature:
             None -> str
         
-        Version 2.0.0.0
+        Version 3.0.0.0
         """
-        BarWidth = self.Width - 2
-        Position = 1 + int(self.Value * (BarWidth - 1))
+        MaxWidth = min(self.Width, GetScreenWidth())
+        BarWidth = MaxWidth - 3
+        Position = int(round(self.Value * BarWidth))
         LS = self._Line
-        LeftSpacer = LS * (Position - 1) if Position > 1 else ''
+        LeftSpacer = LS * Position if Position else ''
         RightSpacer = LS * (BarWidth - Position) if Position < BarWidth else ''
         Value=f'{self._Left}{LeftSpacer}{self._Gauge}{RightSpacer}{self._Right}'
         return Value
@@ -796,7 +893,7 @@ class ProgressBar(BarControl_ABC):
         setStyle(Style):
             type type A -> None
     
-    Version 1.2.0.0
+    Version 1.3.0.0
     """
 
     def __init__(self, Value: float, *, Width: int = 5,
@@ -834,10 +931,11 @@ class ProgressBar(BarControl_ABC):
         Signature:
             None -> str
         
-        Version 2.0.0.0
+        Version 3.0.0.0
         """
-        BarWidth = self.Width - 2
-        Position = int(self.Value * BarWidth)
+        MaxWidth = min(self.Width, GetScreenWidth())
+        BarWidth = MaxWidth - 2
+        Position = int(round(self.Value * BarWidth))
         Filled = self._Full * Position
         Unfilled= self._Empty*(BarWidth-Position) if Position < BarWidth else ''
         Result = f'{self._Left}{Filled}{Unfilled}{self._Right}'
@@ -917,6 +1015,8 @@ class ScalableWidth:
     def setWidth(self, Width: int) -> None:
         """
         Changes the current width of the widget's representation in characters.
+        Automatically clears the widget`s representation, but does not displays
+        the widget with the updated width - use show() or update() afterwards!
 
         Signature:
             int >= MinWidth -> None
@@ -932,11 +1032,11 @@ class ScalableWidth:
         
         Version 1.0.0.1
         """
+        self.clear()
         if isinstance(Width, int):
             if Width < self.MinWidth:
                 ErrorMessage = f'> {self.MinWidth} - minimum allowed width'
                 raise UT_ValueError(Width, ErrorMessage, SkipFrames = 1)
-            self.clear()
         else:
             raise UT_TypeError(Width, int, SkipFrames = 1)
         self._Width = Width
@@ -1031,6 +1131,9 @@ class TextLabelVW(TextLabel, ScalableWidth):
             characters) of the visual representation
         Alignment: (read-only property) str; the used text alignment - one of
             the values 'l', 'c' or 'r', meaning left, center or right
+        SymTrunc: (keyword) bool OR None; text trunction type, None - simple
+                tail truncation, False - tail truncation with '...' added,
+                True - middle part removal with '...' insertion
 
     Methods:
         clear():
@@ -1045,20 +1148,27 @@ class TextLabelVW(TextLabel, ScalableWidth):
             int >= MinWidth -> None
         getStringValue():
             None -> str
+        optimizeWidth():
+            None -> None
     
-    Version 1.0.0.1
+    Version 1.1.0.0
     """
-    pass
+
+    #deafult min width as class variable
+
+    _MinWidth: ClassVar[int] = 1
 
     #special methods
 
     def __init__(self, Value: Any, *, Width: Optional[int] = None,
-                            Alignment: str  = 'l', **kwargs) -> None:
+                            Alignment: str  = 'l',
+                            SymTrunc: Optional[bool] = None,
+                            **kwargs) -> None:
         """
         Initializer. Creates and sets the instance attributes.
 
         Signature:
-            type A/, *, int OR None, str, **kwargs/ -> None
+            type A/, *, int OR None, str, bool OR None, **kwargs/ -> None
         
         Args:
             Value: type A; any value to be assigned as the internal state
@@ -1067,6 +1177,9 @@ class TextLabelVW(TextLabel, ScalableWidth):
                 length of the string representation of the value + 1 character
             Alignment: (keyword) str; alignment of the text - one of the posible
                 values 'l', 'c' or 'r' case-insensitive
+            SymTrunc: (keyword) bool OR None; text trunction type, None - simple
+                tail truncation, False - tail truncation with '...' added,
+                True - middle part removal with '...' insertion
             **kwargs: (keyword) **dict(str -> int OR bool); text decorators,
                 allowed Foreground, Background (0..255), BOLD, ITALIC, FAINT,
                 UNDERLINE, DOUBLE, STRIKE, HIDE, INVERSE (bool)
@@ -1081,30 +1194,32 @@ class TextLabelVW(TextLabel, ScalableWidth):
                 values, OR integer value outside of 0..255 range is passed for
                 the background or foreground colour
 
-        Version 1.0.0.1
+        Version 2.0.0.0
         """
         self._Value = None
+        ScreenWidth = GetScreenWidth()
         InputLen = len(self._normalizeInput(str(Value)))
         if Width is None:
-            _Width = max(self.MinWidth, InputLen)
+            _Width = min(max(self.MinWidth, InputLen + 1), ScreenWidth)
         elif isinstance(Width, int):
             if Width >= self.MinWidth:
-                _Width = max(Width, InputLen)
+                _Width = min(Width, ScreenWidth)
             else:
                 ErrorMessage = '> {} - widget`s width in characters'.format(
                                                             self.MinWidth - 1)
                 raise UT_ValueError(Width, ErrorMessage, SkipFrames = 1)
-        
-        super().__init__(Value, Width = _Width, Alignment = Alignment, **kwargs)
+        super().__init__(Value, Width = _Width, Alignment = Alignment,
+                                                SymTrunc = SymTrunc, **kwargs)
     
     #public instance methods
 
     def setValue(self, Value: Any, **kwargs) -> None:
         """
         Method to set the internal state (value) of a widget. The passed value
-        is converted into a string. It does not refresh the representation. Use
-        method update() to refresh. The mimimum allowed and the current width
-        of the widget is set to len(str(Value)) + 1.
+        is converted into a string. It clears but does not refresh the widget`s
+        representation. Use method update() or show() to refresh. The mimimum
+        allowed and the current width of the widget is set to
+        len(str(Value)) + 1.
 
         Signature:
             type A -> None
@@ -1122,18 +1237,34 @@ class TextLabelVW(TextLabel, ScalableWidth):
             UT_ValueError: Integer value outside of 0..255 range is passed for
                 the background or foreground colour
         
-        Version 1.0.0.1
+        Version 2.0.0.0
         """
+        ScreenWidth = GetScreenWidth()
         if not (self._Value is None):
             self.clear()
         _Value = self._normalizeInput(str(Value))
         self._Value = _Value
-        self._MinWidth = max(len(_Value) + 1, self.__class__._MinWidth)
-        self._Width = max(len(_Value) + 1, self._MinWidth)
+        self._Width = min(self.Width, ScreenWidth)
         if len(kwargs):
             self._Settings = self._parseKwargs(**kwargs)
         else:
             self._Settings = None
+        
+    def optimizeWidth(self) -> None:
+        """
+        Adjusts the width of the widget to fit the text length and the terminal
+        width. It clears but does not refresh the widget`s representation. Use
+        method update() or show() to refresh.
+
+        Signature:
+            None -> None
+        
+        Version 1.0.0.0
+        """
+        NewWidth = min(len(self.Value) + 1, GetScreenWidth())
+        if NewWidth != self.Width:
+            self.clear()
+            self._Width = NewWidth
 
 class HContainer(CLUI_ABC):
     """
@@ -1147,6 +1278,9 @@ class HContainer(CLUI_ABC):
     the runtime. The variable width widgets will be scaled equally to fill the
     entire width of the container, but the width of the fixed size widgets will
     not be affected.
+
+    Note, that unlike individual widgets, the width of the containter cannot
+    exceed the current width of the terminal window - adjusted automatically.
 
     Sub-classes CLUI_ABC.
 
@@ -1172,7 +1306,7 @@ class HContainer(CLUI_ABC):
         getStringValue():
             None -> str
     
-    Version 1.1.0.1
+    Version 1.2.0.0
     """
 
     #special methods
@@ -1186,20 +1320,21 @@ class HContainer(CLUI_ABC):
             /*, int, .../ -> None
         
         Args:
-            Width: (keyword) int >= 0; width of the widget's representation in
-                characters; the default value is 80
+            Width: (keyword) int > 0; width of the widget's representation in
+                characters; the default value is 80, but can be reduced to fit
+                the terminal`s width
         
         Raises:
             UT_TypeError: passed Width argument is not an integer
-            UT_ValueError: passed Width argument is integer but not >= 0
+            UT_ValueError: passed Width argument is integer but not > 0
 
-        Version 1.0.0.1
+        Version 2.0.0.0
         """
         if isinstance(Width, int):
-            if (Width >= 0):
-                self._Width = Width
+            if (Width > 0):
+                self._Width = min(Width, GetScreenWidth())
             else:
-                ErrorMessage = '>= 0 - widget`s width in characters'
+                ErrorMessage = '> 0 - widget`s width in characters'
                 raise UT_ValueError(Width, ErrorMessage, SkipFrames = 1)
         else:
             raise UT_TypeError(Width, int, SkipFrames = 1)
@@ -1245,7 +1380,8 @@ class HContainer(CLUI_ABC):
     def setWidth(self, Width: int) -> None:
         """
         Changes the current width of the container's representation in
-        characters.
+        characters. The current representation is cleared, but not re-drawn. Use
+        method show() or update() afterwards!
 
         Signature:
             int >= MinWidth -> None
@@ -1256,20 +1392,16 @@ class HContainer(CLUI_ABC):
 
         Raises:
             UT_TypeError: argument is not an integer
-            UT_ValueError: arguent is an integer but smaller than the minimum
-                required width
         
-        Version 1.0.0.1
+        Version 2.0.0.0
         """
+        self.clear()
+        ScreenWidth = GetScreenWidth()
         MinWidth = self.MinWidth
-        if isinstance(Width, int):
-            if Width < MinWidth:
-                ErrorMessage = f'> {MinWidth} - minimum required width'
-                raise UT_ValueError(Width, ErrorMessage, SkipFrames = 1)
-            self.clear()
-        else:
+        if not isinstance(Width, int):
             raise UT_TypeError(Width, int, SkipFrames = 1)
-        self._Width = Width
+        if Width >= MinWidth:
+            self._Width = max(min(Width, ScreenWidth), MinWidth)
         #scale the variable width widgets
         FreeSpace = self.Width - MinWidth
         NumberScalable = 0
@@ -1298,7 +1430,7 @@ class HContainer(CLUI_ABC):
         
         Version 1.0.0.1
         """
-        Blanks = ' ' * self.Width
+        Blanks = ' ' * min(self.Width, GetScreenWidth())
         sys.stdout.write(f'\r{Blanks}\r')
         sys.stdout.flush()
     
@@ -1310,15 +1442,20 @@ class HContainer(CLUI_ABC):
         Signature:
             None -> str
         
-        Version 1.0.0.1
+        Version 2.0.0.0
         """
-        Result = ''.join([Item.getStringValue() for Item in self._Widgets])
+        ScreenWidth = GetScreenWidth()
+        if self.Width > ScreenWidth:
+            Result = 'Error'
+        else:
+            Result = ''.join([Item.getStringValue() for Item in self._Widgets])
         return Result
     
     def addWidget(self, Widget: HWidget_ABC) -> None:
         """
         Method to add another widget to the stack, but only if it fits the
-        free space available in the container.
+        free space available in the container. The representation of the widget
+        is neither cleared nor updated.
 
         Signature:
             HWidget_ABC -> None
@@ -1333,7 +1470,7 @@ class HContainer(CLUI_ABC):
             UT_Exception: the width of the new widget is too large to fit the
                 remaining space in the container
         
-        Version 1.0.0.1
+        Version 1.1.0.0
         """
         if not isinstance(Widget, HWidget_ABC):
             raise UT_TypeError(Widget, HWidget_ABC, SkipFrames = 1)
@@ -1348,4 +1485,3 @@ class HContainer(CLUI_ABC):
                                             f'available {Remains} characters'])
             raise UT_Exception(ErrorMessage, SkipFrames = 1)
         self._Widgets.append(Widget)
-        self.setWidth(self.Width)

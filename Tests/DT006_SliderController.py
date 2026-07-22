@@ -107,10 +107,10 @@ def KeyboardListener():
                 elif Key == 'PageDown':
                     Widget.dec10p()
                     Widget.update()
-                elif Key == 'KeyDOWN' and CurrentWidth >= 6:
+                elif Key == 'KeyDOWN':
                     Widget.setWidth(CurrentWidth - 1)
                     Widget.update()
-                elif Key == 'KeyUP' and CurrentWidth <= 79:
+                elif Key == 'KeyUP':
                     Widget.setWidth(CurrentWidth + 1)
                     Widget.update()
                 elif Key == 'Home':

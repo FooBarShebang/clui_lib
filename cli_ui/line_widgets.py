@@ -9,8 +9,8 @@ Classes:
     SliderControlIndicator
 """
 
-__version__= '1.1.0.0'
-__date__ = '08-07-2026'
+__version__= '1.2.0.0'
+__date__ = '22-07-2026'
 __status__ = 'Development'
 
 #imports
@@ -132,21 +132,19 @@ class ProgressBarIndicator:
             self._Value = Value
         else:
             raise UT_TypeError(Value, int, SkipFrames = 1)
-        MinWidth = 5 #minimum for the progress bar
+        MinWidth = ProgressBarVW._MinWidth #minimum for the progress bar
         if ShowCounter:
             MinWidth += 2 * (len(str(Range)) + 1) #minimum for counter
         if ShowPercents:
             MinWidth += 5 #minimum for % indicator
         if isinstance(Width, int):
-            if (Width >= MinWidth):
-                self._Width = Width
-            else:
+            if Width < MinWidth:
                 ErrorMessage = f'>= {MinWidth} - widget`s width in characters'
                 raise UT_ValueError(Width, ErrorMessage, SkipFrames = 1)
         else:
             raise UT_TypeError(Width, int, SkipFrames = 1)
         self._PBar = ProgressBarVW(0)
-        self._Indicator = HContainer(Width = self.Width)
+        self._Indicator = HContainer(Width = Width)
         self._Indicator.addWidget(self._PBar)
         if ShowCounter:
             DisplayValue = f'{self.Value}/{self.Range}'
@@ -164,6 +162,7 @@ class ProgressBarIndicator:
             self._Percents = None
         self._IsActive = False
         self.setStyle(Style)
+        self._Indicator.setWidth(Width)
 
     #private helper methods
 
@@ -197,7 +196,7 @@ class ProgressBarIndicator:
         
         Version 1.0.0.0
         """
-        return self._Width
+        return self._Indicator.Width
     
     @property
     def IsActive(self) -> bool:
@@ -391,6 +390,8 @@ class ProgressBarIndicator:
 
         Version 1.0.0.1
         """
+        self._Indicator.clear()
+        Width = self.Width
         if isinstance(Range, int):
             if Range <= 0:
                 ErrorMessage = '> 0 - maximum value, i.e. range'
@@ -406,19 +407,20 @@ class ProgressBarIndicator:
                 MinLength = self._PBar.MinWidth + 2 * (NewLength + 1)
                 if not (self._Percents is None):
                     MinLength += self._Percents.Width
-                if MinLength > self.Width:
-                    self._Width = MinLength
+                if MinLength > Width:
+                    Width = MinLength
                 del self._Indicator
                 del self._Counter
                 DisplayValue = f'{self.Value}/{Range}'
                 self._Counter = TextLabel(DisplayValue,
                                                     Width = 2 * (NewLength + 1),
                                                                 Alignment = 'r') 
-                self._Indicator = HContainer(Width = self.Width)
+                self._Indicator = HContainer(Width = Width)
                 self._Indicator.addWidget(self._PBar)
                 self._Indicator.addWidget(self._Counter)
                 if not (self._Percents is None):
                     self._Indicator.addWidget(self._Percents)
+                self._Indicator.setWidth(Width)
         self._Range = Range
         self._show()
     
@@ -552,19 +554,17 @@ class SliderControlIndicator:
             self._Value = Value
         else:
             raise UT_TypeError(Value, int, SkipFrames = 1)
-        MinWidth = (len(str(Label)) + 1) + 5
+        MinWidth = (len(str(Label)) + 1) + SliderVW._MinWidth
         #minimum for the label and slider
         if ShowValue:
             MinWidth += (len(str(Range)) + 1) #minimum for value indicator
         if isinstance(Width, int):
-            if (Width >= MinWidth):
-                self._Width = Width
-            else:
+            if Width < MinWidth:
                 ErrorMessage = f'>= {MinWidth} - widget`s width in characters'
                 raise UT_ValueError(Width, ErrorMessage, SkipFrames = 1)
         else:
             raise UT_TypeError(Width, int, SkipFrames = 1)
-        self._Indicator = HContainer(Width = self.Width)
+        self._Indicator = HContainer(Width = Width)
         self._Indicator.addWidget(TextLabel(Label))
         self._Slider = SliderVW(0)
         self._Indicator.addWidget(self._Slider)
@@ -576,6 +576,7 @@ class SliderControlIndicator:
         else:
             self._Counter = None
         self.setStyle(Style)
+        self._Indicator.setWidth(Width)
 
     #+ properties
 
@@ -587,9 +588,9 @@ class SliderControlIndicator:
         Signature:
             None -> int > 0
         
-        Version 1.0.0.0
+        Version 2.0.0.0
         """
-        return self._Width
+        return self._Indicator.Width
     
     @property
     def Value(self) -> int:
@@ -683,8 +684,8 @@ class SliderControlIndicator:
     
     def setValue(self, Value: int) -> None:
         """
-        Explicitely changes the value of the internal counter. Updates the view
-        if the widget is running.
+        Explicitely changes the value of the internal counter. Does not update
+        the view if the widget is running.
 
         Signature:
             int >= 0 -> None
@@ -726,16 +727,8 @@ class SliderControlIndicator:
             UT_ValueError: argument is an integer but smaller than the minimum
                 required space
         
-        Version 1.0.0.1
+        Version 2.0.0.0
         """
-        MinWidth = self._Indicator.MinWidth
-        if isinstance(Width, int):
-            if Width < MinWidth:
-                ErrorMessage = f'>= {MinWidth} - minimum width'
-                raise UT_ValueError(Width, ErrorMessage, SkipFrames = 1)
-        else:
-            raise UT_TypeError(Width, int, SkipFrames = 1)
-        self._Width = Width
         self._Indicator.setWidth(Width)
     
     def getStringValue(self) -> str:

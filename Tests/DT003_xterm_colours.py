@@ -53,3 +53,4 @@ if __name__ == '__main__':
             Colour = Row * 8 + Column
             Line = f'{Line}{xtc.Colorize('  ', Background = Colour)}'
         print(Line)
+    print('End of test')

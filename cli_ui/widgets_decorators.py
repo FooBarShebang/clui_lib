@@ -4,6 +4,12 @@ Module clui_lib.widgets_decorators
 Helper classes to define and change the appearance of CLI UI widgets.
 """
 
+__version__= '1.0.0.0'
+__date__ = '08-07-2026'
+__status__ = 'Development'
+
+#imports
+
 from typing import ClassVar, Optional
 
 # single characters

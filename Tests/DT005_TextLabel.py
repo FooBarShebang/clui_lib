@@ -6,8 +6,8 @@ the fixed and variable width Text Labels
 
 """
 
-__version__= '1.0.0.0'
-__date__ = '01-07-2026'
+__version__= '2.0.0.0'
+__date__ = '22-07-2026'
 __status__ = 'Testing'
 
 #imports
@@ -90,18 +90,22 @@ if __name__ == '__main__':
     time.sleep(SLEEP_TIME)
     #change label and update - shorter text
     objTest.setValue('Hi \u0043\u0327!')
+    objTest.optimizeWidth()
     objTest.update()
     time.sleep(SLEEP_TIME)
     #change label and update - longer text
     objTest.setValue('You are welcome \u0043\u0327!')
+    objTest.optimizeWidth()
     objTest.update()
     time.sleep(SLEEP_TIME)
     #change label and update - original text with background colour
     objTest.setValue(Label, Background = 3)
+    objTest.optimizeWidth()
     objTest.update()
     time.sleep(SLEEP_TIME)
     #change label and update - original text with foreground colour
     objTest.setValue(Label, Foreground = 4)
+    #no need for optimizeWidth() since the length of the text is the same
     objTest.update()
     time.sleep(SLEEP_TIME)
     #change label and update - original text with bold italic font
@@ -140,4 +144,22 @@ if __name__ == '__main__':
     time.sleep(SLEEP_TIME)
     objTest.clear()
     del objTest
-    print('\nEnd of demostration')
+    #demonstration of trunctations
+    Label = 'You are welcome \u0043\u0327!'
+    objTest = test_module.TextLabelVW(Label)
+    objTest.show()
+    print()
+    del objTest
+    objTest = test_module.TextLabelVW(Label, Width = 16)
+    objTest.show()
+    print()
+    del objTest
+    objTest = test_module.TextLabelVW(Label, Width = 16, SymTrunc = True)
+    objTest.show()
+    print()
+    del objTest
+    objTest = test_module.TextLabelVW(Label, Width = 16, SymTrunc = False)
+    objTest.show()
+    print()
+    del objTest
+    print('End of demostration')

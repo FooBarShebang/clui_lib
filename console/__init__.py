@@ -15,8 +15,9 @@ Modules:
     keystroke_windows: Microsoft Windows specific implementation of a keyboard
         listener based on the msvcrt module's functionality
     ibm_scancodes_mapping: IBM scancodes -> keys pressed mapping (Windows)
+    clear_screen: clear the terminal (console) screen
 """
 
-__version__= '0.2.0.2'
-__date__ = '01-07-2026'
+__version__= '0.2.0.3'
+__date__ = '21-07-2026'
 __status__ = 'Developement'

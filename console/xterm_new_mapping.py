@@ -15,7 +15,7 @@ Attributes:
 
 __version__= '1.0.0.0'
 __date__ = '06-08-2021'
-__status__ = 'Testing'
+__status__ = 'Production'
 
 #globals
 
