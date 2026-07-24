@@ -7,10 +7,11 @@ Implements a number of configurable, multiple components, single line widgets.
 Classes:
     ProgressBarIndicator
     SliderControlIndicator
+    SpinnerIndicator
 """
 
-__version__= '1.2.0.0'
-__date__ = '22-07-2026'
+__version__= '1.3.0.0'
+__date__ = '24-07-2026'
 __status__ = 'Development'
 
 #imports
@@ -32,9 +33,11 @@ if not (ROOT_FOLDER in sys.path):
 #++ actual imports
 
 from .base_view_classes import HContainer, ProgressBarVW, TextLabel, SliderVW
+from .base_view_classes import Spinner, GetScreenWidth, TextLabelVW
 
 from .widgets_decorators import ProgressBarDecoratorSimple
 from .widgets_decorators import SliderWidgetDecoratorSimple
+from .widgets_decorators import SpinnerSimple
 
 from introspection_lib.base_exceptions import UT_ValueError, UT_TypeError
 
@@ -781,4 +784,96 @@ class SliderControlIndicator:
         Version 1.0.0.0
         """
         self.getStringValue() #forces the current values into sub-widgets
+        self._Indicator.update()
+
+class SpinnerIndicator:
+    """
+    Command line widget combining Spinner and a variable width text label, which
+    width is automatically adjusted to the width of the terminal.
+    
+    Attributes:
+        Width: (read-only property) int > 1; the current width of the widget
+        
+    Methods:
+        next():
+            None -> None
+        setLabel(Label):
+            str -> None
+        update():
+            None -> None
+        
+    Version 1.0.0.0
+    """
+
+    #special methods
+
+    def __init__(self, Label: str = '', *,
+                                    SpinnerStyle: type = SpinnerSimple) -> None:
+        """
+        Initialization method. Sets the Spinner style and initial text value,
+        and displays the widget.
+
+        Signature:
+            /str, type type A/ -> None
+        
+        Args:
+            Label: str; string to be displayed after the Spinner
+            Style: type type A; decorators stored in a struct-like class as the
+                            class attributes, see widgets_decorators module
+
+        Version 1.0.0.0
+        """
+        ScreenWidth = GetScreenWidth()
+        self._Spinner = Spinner(Style = SpinnerStyle)
+        Text = str(Label)
+        TextWidth = min(len(Text) + 1, ScreenWidth - self._Spinner.Width)
+        self._Label = TextLabelVW(Text, Width = TextWidth,
+                                            Alignment = 'r', SymTrunc = True)
+        self._Indicator = HContainer(Width = TextWidth + self._Spinner.Width)
+        self._Indicator.addWidget(self._Spinner)
+        self._Indicator.addWidget(self._Label)
+        self._Indicator.show()
+
+    #public methods
+
+    def next(self) -> None:
+        """
+        Selects the next symbol for Spinner from the set.
+        
+        Signature:
+            None -> None
+        
+        Version 1.0.0.0
+        """
+        self._Spinner.next()
+
+    def setLabel(self, Label: str) -> None:
+        """
+        Changes the text displayed after the Spinner. Clears the previous
+        representation of the widget, but does not prints out the new one. Use
+        method update().
+
+        Signature:
+            str -> None
+        
+        Args:
+            Label: str; text to be displayed after the Spinner
+        
+        Version 1.0.0.0
+        """
+        self._Indicator.clear()
+        ScreenWidth = GetScreenWidth()
+        SpinnerWidth = self._Spinner.Width
+        NewLabel = str(Label)
+        NewWidth = min(ScreenWidth, SpinnerWidth + 1 + len(NewLabel))
+        self._Label.setValue(NewLabel)
+        self._Indicator.setWidth(NewWidth)
+
+    def update(self) -> None:
+        """
+        Prints out / updates the widget representation.
+    
+        Version 1.0.0.0
+        """
+        #self.getStringValue() #forces the current values into sub-widgets
         self._Indicator.update()

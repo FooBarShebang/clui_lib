@@ -15,6 +15,7 @@ Classes:
         a slider
     ScalableWidth: mixin, implements functionality to change the widget's width
         during runtime
+    Spinner: looping through a list of pre-defined symbols
     TextLabel: fixed width, variable content text label widget
     TextLabelVW: variable width and content text label widget, the stored
         string value will never be truncated
@@ -32,8 +33,8 @@ Classes:
         into a single line representation in the text console
 """
 
-__version__= '1.2.0.0'
-__date__ = '22-07-2026'
+__version__= '1.2.1.0'
+__date__ = '24-07-2026'
 __status__ = 'Development'
 
 #imports
@@ -66,6 +67,7 @@ from ..console.xterm_colours import ALL_ATTRIBUTES, MIN_INDEX, MAX_INDEX
 
 from .widgets_decorators import ProgressBarDecoratorSimple
 from .widgets_decorators import SliderWidgetDecoratorSimple
+from .widgets_decorators import SpinnerSimple
 
 if os.name == 'posix':
     from ..console.xterm_colours import Colorize
@@ -415,6 +417,121 @@ class HWidget_ABC(CLUI_ABC):
         sys.stdout.write(f'\r{Filler}\r')
         sys.stdout.flush()
 
+class Spinner(HWidget_ABC):
+    """
+    Spinner - a simple progress indicator using looping through a set of pre-
+    defined symbols.
+
+    Sub-classes HWidget_ABC -|> CLUI_ABC.
+    
+    Attributes:
+        Value: (read-only property) int >= 0; index of the current symbol
+        Width: (read-only property) int > 0; current width (in characters) of
+            the visual representation
+    
+    Methods:
+        clear():
+            None -> None
+        show():
+            None -> None
+        update():
+            None -> None
+        setValue(Value):
+            type A -> None
+        getStringValue():
+            None -> str
+        next():
+            None -> None
+    
+    Version 1.0.0.0
+    """
+
+    #special methods
+
+    def __init__(self, *, Style: type = SpinnerSimple) -> None:
+        """
+        Initializer. Creates and sets the instance attributes.
+        
+        Signature:
+            /type type A/ -> None
+        
+        Args:
+            Style: type type A; decorators stored in a struct-like class as the
+                class attributes, see widgets_decorators module
+        
+        Version 1.0.0.0
+        """
+        #todo - check validity of Style
+        self._Value = 0
+        if hasattr(Style, 'Symbols'):
+            self._Range = list(Style.Symbols)
+        else:
+            self._Range = list(SpinnerSimple.Symbols)
+        self._Width = max(len(Item) for Item in self._Range)
+        if (hasattr(Style, 'Foreground') and isinstance(Style.Foreground, int)
+                                                    and Style.Foreground >= 0):
+            self._Foreground = Style.Foreground
+        else:
+            self._Foreground = None
+        if (hasattr(Style, 'Background') and isinstance(Style.Background, int)
+                                                    and Style.Background >= 0):
+            self._Background = Style.Background
+        else:
+            self._Background = None
+
+    #public methods
+
+    def setValue(self, Index: int) -> None:
+        """
+        Method to explicitely set an index of the symbol to be displayed. The
+        passed argument must be non-negative integer, which modulo of division
+        by the length of the list of available symbols is the index of the
+        symbol to be selected.
+
+        Signature:
+            int >= 0 -> None
+        
+        Args:
+            Index: int >= 0; desired symbol`s index
+        
+        Vesion 1.0.0.0
+        """
+        if isinstance(Index, int) and Index >= 0:
+            self._Value = Index % len(self._Range)
+
+    def next(self) -> None:
+        """
+        Selects the next symbol from the set.
+
+        Signature:
+            None -> None
+        
+        Version 1.0.0.0
+        """
+        if self.Value < len(self._Range) - 1:
+            self._Value += 1
+        else:
+            self._Value = 0
+
+    def getStringValue(self) -> str:
+        """
+        Returns the current symbol from the set, with back- and foreground
+        colours applied if possible and neccessary.
+    
+        Signature:
+            None -> str
+            
+        Version 1.0.0.0
+        """
+        Symbol = self._Range[self.Value]
+        if len(Symbol) < self.Width:
+            Filler = ' ' * (self.Width - len(Symbol))
+            Symbol = f'{Symbol}{Filler}'
+        if (not self._Foreground is None) or (not self._Background is None):
+            Symbol = ColorizeFunc(Symbol, Foreground = self._Foreground,
+                                                Background = self._Background)
+        return Symbol
+
 class TextLabel(HWidget_ABC):
     """
     Text label widget's view class. The width of the representation is set
@@ -427,7 +544,7 @@ class TextLabel(HWidget_ABC):
     Sub-classes HWidget_ABC -|> CLUI_ABC.
 
     Attributes:
-        Value: (read-only property) type A; internal state of a widget
+        Value: (read-only property) str; internal state of a widget
         Width: (read-only property) int > 0; current width (in characters) of
             the visual representation
         Alignment: (read-only property) str; the used text alignment - one of
@@ -606,7 +723,7 @@ class TextLabel(HWidget_ABC):
     
     def getStringValue(self) -> str:
         """
-        Returnst the currently stored string with at least one space after it
+        Returns the currently stored string with at least one space after it
         (for 'l' and 'c' alignments) or before it (for 'r' alignement). Too long
         strings are truncated. The text is also truncated if the widget doesn't
         fit the terminal`s width.
@@ -1123,7 +1240,8 @@ class TextLabelVW(TextLabel, ScalableWidth):
     Sub-classes (TextLebel -|> HWidget_ABC -|> CLUI_ABC, ScalableWidth).
 
     Attributes:
-        Value: (read-only property) type A; internal state of a widget
+        Value: (read-only property) str; internal state of a widget - full text
+            of the stored string
         MinWidth: (read-only property) int > 0; minimum allowed width of the
             widget, current value is 5 - implemented via private instance
             attribute

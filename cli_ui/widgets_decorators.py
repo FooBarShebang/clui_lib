@@ -5,7 +5,7 @@ Helper classes to define and change the appearance of CLI UI widgets.
 """
 
 __version__= '1.0.0.0'
-__date__ = '08-07-2026'
+__date__ = '24-07-2026'
 __status__ = 'Development'
 
 #imports
@@ -13,6 +13,68 @@ __status__ = 'Development'
 from typing import ClassVar, Optional
 
 # single characters
+
+class SpinnerSimple:
+    """
+    Symbols to indicate the states of a Spinner widget.
+    """
+    Symbols: ClassVar[list[str]] = ['|', '/', '-', '\\']
+    Foreground: ClassVar[Optional[int]] = None
+    Background: ClassVar[Optional[int]] = None
+
+class SpinnerBrailleBarUp:
+    """
+    Symbols to indicate the states of a Spinner widget.
+    """
+    Symbols: ClassVar[list[str]] = ['\u2800', '\u28C0', '\u28E4', '\u28F6',
+                                    '\u28FF', '\u283F', '\u281B', '\u2809']
+    Foreground: ClassVar[Optional[int]] = None
+    Background: ClassVar[Optional[int]] = None
+
+class SpinnerBrailleBarDown:
+    """
+    Symbols to indicate the states of a Spinner widget.
+    """
+    Symbols: ClassVar[list[str]] = ['\u2800', '\u2809', '\u281B', '\u283F',
+                                    '\u28FF', '\u28F6', '\u28E4', '\u28C0']
+    Foreground: ClassVar[Optional[int]] = None
+    Background: ClassVar[Optional[int]] = None
+
+class SpinnerBrailleBarUpDown:
+    """
+    Symbols to indicate the states of a Spinner widget.
+    """
+    Symbols: ClassVar[list[str]] = ['\u2800', '\u28C0', '\u28E4', '\u28F6',
+                                    '\u28FF', '\u28F6', '\u28E4', '\u28C0']
+    Foreground: ClassVar[Optional[int]] = None
+    Background: ClassVar[Optional[int]] = None
+
+class SpinnerBrailleCircle:
+    """
+    Symbols to indicate the states of a Spinner widget.
+    """
+    Symbols: ClassVar[list[str]] = ['\u2840', '\u2804', '\u2802', '\u2801',
+                                    '\u2808', '\u2810', '\u2820', '\u2880']
+    Foreground: ClassVar[Optional[int]] = None
+    Background: ClassVar[Optional[int]] = None
+
+class SpinnerBrailleCircleDouble:
+    """
+    Symbols to indicate the states of a Spinner widget.
+    """
+    Symbols: ClassVar[list[str]] = ['\u28C0', '\u2844', '\u2806', '\u2803',
+                                    '\u2809', '\u2818', '\u2830', '\u28A0']
+    Foreground: ClassVar[Optional[int]] = None
+    Background: ClassVar[Optional[int]] = None
+
+class SpinnerBrailleCircleSpaced:
+    """
+    Symbols to indicate the states of a Spinner widget.
+    """
+    Symbols: ClassVar[list[str]] = ['\u2884', '\u2842', '\u2805', '\u280A',
+                                    '\u2811', '\u2828', '\u2890', '\u2860']
+    Foreground: ClassVar[Optional[int]] = None
+    Background: ClassVar[Optional[int]] = None
 
 class SliderGaugeSimple:
     """
