@@ -16,6 +16,12 @@ Classes:
     ScalableWidth: mixin, implements functionality to change the widget's width
         during runtime
     Spinner: looping through a list of pre-defined symbols
+    Button: widget with two states, which can be toggled or set implicitely
+    OnOffButton: specialized sub-class of Button - shows ON and OFF, on Possix
+        systems also colour decoration is added
+    RadioButton: specialized sub-class of Button - shows ( ) and (*)
+    CheckButton: specialized sub-class of Button - shows [ ] and [X]
+    ArrowIndicator: specialized sub-class of Button - shows '->' and '  ' states
     TextLabel: fixed width, variable content text label widget
     TextLabelVW: variable width and content text label widget, the stored
         string value will never be truncated
@@ -33,8 +39,8 @@ Classes:
         into a single line representation in the text console
 """
 
-__version__= '1.2.1.0'
-__date__ = '24-07-2026'
+__version__= '1.3.0.0'
+__date__ = '28-07-2026'
 __status__ = 'Development'
 
 #imports
@@ -61,13 +67,15 @@ if not (ROOT_FOLDER in sys.path):
 #++ actual imports
 
 from introspection_lib.base_exceptions import UT_ValueError, UT_TypeError
-from introspection_lib.base_exceptions import UT_Exception
+from introspection_lib.base_exceptions import UT_Exception, UT_IndexError
 
 from ..console.xterm_colours import ALL_ATTRIBUTES, MIN_INDEX, MAX_INDEX
 
 from .widgets_decorators import ProgressBarDecoratorSimple
 from .widgets_decorators import SliderWidgetDecoratorSimple
-from .widgets_decorators import SpinnerSimple
+from .widgets_decorators import SpinnerSimple, ArrowIndicatorDecorator
+from .widgets_decorators import OnOffColouredButtonDecorator
+from .widgets_decorators import RadioButtonDecorator, CheckButtonDecorator
 
 if os.name == 'posix':
     from ..console.xterm_colours import Colorize
@@ -437,7 +445,7 @@ class Spinner(HWidget_ABC):
         update():
             None -> None
         setValue(Value):
-            type A -> None
+            int -> None
         getStringValue():
             None -> str
         next():
@@ -456,8 +464,8 @@ class Spinner(HWidget_ABC):
             /type type A/ -> None
         
         Args:
-            Style: type type A; decorators stored in a struct-like class as the
-                class attributes, see widgets_decorators module
+            Style: (keyword) type type A; decorators stored in a struct-like
+                class as the class attributes, see widgets_decorators module
         
         Version 1.0.0.0
         """
@@ -531,6 +539,362 @@ class Spinner(HWidget_ABC):
             Symbol = ColorizeFunc(Symbol, Foreground = self._Foreground,
                                                 Background = self._Background)
         return Symbol
+
+class Button(HWidget_ABC):
+    """
+    Button - a simple 2-states indicator emulating behaviour of a button.
+
+    Sub-classes HWidget_ABC -|> CLUI_ABC.
+    
+    Attributes:
+        Value: (read-only property) bool; On (True) / Off (False) state of the
+            widget
+        Width: (read-only property) int > 0; current width (in characters) of
+            the visual representation
+    
+    Methods:
+        clear():
+            None -> None
+        show():
+            None -> None
+        update():
+            None -> None
+        setValue(Value):
+            bool -> None
+        getStringValue():
+            None -> str
+        toggleState():
+            None -> None
+    
+    Version 1.0.0.0
+    """
+
+    #special methods
+
+    def __init__(self, Style: type) -> None:
+        """
+        Initializer. Creates and sets the instance attributes.
+        
+        Signature:
+            type type A -> None
+        
+        Args:
+            Args:
+                Style: (keyword) type type A; decorators stored in a struct-like
+                    class as the class attributes, see widgets_decorators module
+        
+        Raises:
+            UT_TypeError: passed argument does not have all required attributes
+                to define the wifget`s elements, see widgets_decorators module
+        
+        Version 1.0.0.0
+        """
+        #todo - check validity of Style
+        Error = UT_TypeError(Style, int, SkipFrames = 1)
+        Error.setMessage(f'type(Style) is not a widget definition class')
+        self._Value = False
+        if hasattr(Style, 'OnState') and hasattr(Style.OnState, 'Symbol'):
+            self._OnSymbol = self._normalizeInput(Style.OnState.Symbol)
+        else:
+            raise Error
+        if hasattr(Style, 'OffState') and hasattr(Style.OffState, 'Symbol'):
+            self._OffSymbol = self._normalizeInput(Style.OffState.Symbol)
+        else:
+            raise Error
+        if (hasattr(Style.OnState, 'Foreground')
+                and isinstance(Style.OnState.Foreground, int)
+                                            and Style.OnState.Foreground >= 0):
+            self._OnFG = Style.OnState.Foreground
+        else:
+            self._OnFG = None
+        if (hasattr(Style.OnState, 'Background')
+                and isinstance(Style.OnState.Background, int)
+                                            and Style.OnState.Background >= 0):
+            self._OnBG = Style.OnState.Background
+        else:
+            self._OnBG = None
+        if (hasattr(Style.OffState, 'Foreground')
+                and isinstance(Style.OffState.Foreground, int)
+                                            and Style.OffState.Foreground >= 0):
+            self._OffFG = Style.OffState.Foreground
+        else:
+            self._OffFG = None
+        if (hasattr(Style.OffState, 'Background')
+                and isinstance(Style.OffState.Background, int)
+                                            and Style.OffState.Background >= 0):
+            self._OffBG = Style.OffState.Background
+        else:
+            self._OffBG = None
+        if hasattr(Style, 'Edges'):
+            if (hasattr(Style.Edges, 'Foreground')
+                    and isinstance(Style.Edges.Foreground, int)
+                                            and Style.Edges.Foreground >= 0):
+                self._EdgesFG = Style.Edges.Foreground
+            else:
+                self._EdgesFG = None
+            if (hasattr(Style.Edges, 'Background')
+                    and isinstance(Style.Edges.Background, int)
+                                            and Style.Edges.Background >= 0):
+                self._EdgesBG = Style.Edges.Background
+            else:
+                self._EdgesBG = None
+            if hasattr(Style.Edges, 'Left'):
+                self._Left = self._normalizeInput(Style.Edges.Left)
+            else:
+                self._Left = None
+            if hasattr(Style.Edges, 'Right'):
+                self._Right = self._normalizeInput(Style.Edges.Right)
+            else:
+                self._Right = None
+        else:
+            self._Left = None
+            self._Right = None
+        self._SymbolWidth = max(len(self._OnSymbol), len(self._OffSymbol))
+        self._Width = self._SymbolWidth
+        if not self._Left is None:
+            self._Width += len(self._Left)
+        if not self._Right is None:
+            self._Width += len(self._Right)
+
+    #public methods
+
+    def toggleState(self) -> None:
+        """
+        Toggles the current On / Off state of the widget. Does not update the
+        representation on the screen.
+
+        Signature:
+            None -> None
+        
+        Version 1.0.0.0
+        """
+        self._Value = not self._Value
+
+    def setValue(self, Value: bool) -> None:
+        """
+        Method to explicitely set On (True) or Off (False) state of the widget.
+        Does not update the screen representation.
+
+        Signature:
+            bool -> None
+        
+        Args:
+            Value: bool; any passed type is converted into bool
+        
+        Vesion 1.0.0.0
+        """
+        self._Value = bool(Value)
+
+    def getStringValue(self) -> str:
+        """
+        Returns the full string representation of the current state of the
+        widget.
+    
+        Signature:
+            None -> str
+            
+        Version 1.0.0.0
+        """
+        if self.Value:
+            Symbol = self._OnSymbol
+            Foreground = self._OnFG
+            Background = self._OnBG
+        else:
+            Symbol = self._OffSymbol
+            Foreground = self._OffFG
+            Background = self._OffBG
+        if len(Symbol) < self._SymbolWidth:
+            Filler = ' ' * (self._SymbolWidth - len(Symbol))
+            Symbol = f'{Symbol}{Filler}'
+        if (not Foreground is None) or (not Background is None):
+            Symbol = ColorizeFunc(Symbol, Foreground = Foreground,
+                                                Background = Background)
+        if not self._Left is None:
+            if (not self._EdgesFG is None) or (not self._EdgesBG is None):
+                Left = ColorizeFunc(self._Left, Foreground = self._EdgesFG,
+                                                    Background = self._EdgesBG)
+            else:
+                Left = self._Left
+            Symbol = f'{Left}{Symbol}'
+        if not self._Right is None:
+            if (not self._EdgesFG is None) or (not self._EdgesBG is None):
+                Right = ColorizeFunc(self._Right, Foreground = self._EdgesFG,
+                                                    Background = self._EdgesBG)
+            else:
+                Right = self._Right
+            Symbol = f'{Symbol}{Right}'
+        return Symbol
+
+class OnOffButton(Button):
+    """
+    Button - a simple 2-states indicator emulating behaviour of an On / OFF
+    button. On Posix systems - also using colours.
+
+    Sub-classes Button -> HWidget_ABC -|> CLUI_ABC.
+    
+    Attributes:
+        Value: (read-only property) bool; On (True) / Off (False) state of the
+            widget
+        Width: (read-only property) int > 0; current width (in characters) of
+            the visual representation
+    
+    Methods:
+        clear():
+            None -> None
+        show():
+            None -> None
+        update():
+            None -> None
+        setValue(Value):
+            bool -> None
+        getStringValue():
+            None -> str
+        toggleState():
+            None -> None
+    
+    Version 1.0.0.0
+    """
+
+    #special methods
+
+    def __init__(self) -> None:
+        """
+        Initialization method.
+
+        Signature:
+            None -> None
+        
+        Version 1.0.0.0
+        """
+        super().__init__(OnOffColouredButtonDecorator)
+
+class RadioButton(Button):
+    """
+    Button - a simple 2-states indicator emulating behaviour of a radio-button,
+    displayed as ( ) and (*) respectively.
+
+    Sub-classes Button -> HWidget_ABC -|> CLUI_ABC.
+    
+    Attributes:
+        Value: (read-only property) bool; On (True) / Off (False) state of the
+            widget
+        Width: (read-only property) int > 0; current width (in characters) of
+            the visual representation
+    
+    Methods:
+        clear():
+            None -> None
+        show():
+            None -> None
+        update():
+            None -> None
+        setValue(Value):
+            bool -> None
+        getStringValue():
+            None -> str
+        toggleState():
+            None -> None
+    
+    Version 1.0.0.0
+    """
+
+    #special methods
+
+    def __init__(self) -> None:
+        """
+        Initialization method.
+
+        Signature:
+            None -> None
+        
+        Version 1.0.0.0
+        """
+        super().__init__(RadioButtonDecorator)
+
+class CheckButton(Button):
+    """
+    Button - a simple 2-states indicator emulating behaviour of a check-box,
+    displayed as [ ] and [X] respectively.
+
+    Sub-classes Button -> HWidget_ABC -|> CLUI_ABC.
+    
+    Attributes:
+        Value: (read-only property) bool; On (True) / Off (False) state of the
+            widget
+        Width: (read-only property) int > 0; current width (in characters) of
+            the visual representation
+    
+    Methods:
+        clear():
+            None -> None
+        show():
+            None -> None
+        update():
+            None -> None
+        setValue(Value):
+            bool -> None
+        getStringValue():
+            None -> str
+        toggleState():
+            None -> None
+    
+    Version 1.0.0.0
+    """
+
+    #special methods
+
+    def __init__(self) -> None:
+        """
+        Initialization method.
+
+        Signature:
+            None -> None
+        
+        Version 1.0.0.0
+        """
+        super().__init__(CheckButtonDecorator)
+
+class ArrowIndicator(Button):
+    """
+    Switchable `->` indicator, designed to be used with menu selection widgets.
+
+    Sub-classes Button -> HWidget_ABC -|> CLUI_ABC.
+    
+    Attributes:
+        Value: (read-only property) bool; On (True) / Off (False) state of the
+            widget
+        Width: (read-only property) int > 0; current width (in characters) of
+            the visual representation
+    
+    Methods:
+        clear():
+            None -> None
+        show():
+            None -> None
+        update():
+            None -> None
+        setValue(Value):
+            bool -> None
+        getStringValue():
+            None -> str
+        toggleState():
+            None -> None
+    
+    Version 1.0.0.0
+    """
+
+    #special methods
+
+    def __init__(self) -> None:
+        """
+        Initialization method.
+
+        Signature:
+            None -> None
+        
+        Version 1.0.0.0
+        """
+        super().__init__(ArrowIndicatorDecorator)
 
 class TextLabel(HWidget_ABC):
     """
@@ -1424,7 +1788,7 @@ class HContainer(CLUI_ABC):
         getStringValue():
             None -> str
     
-    Version 1.2.0.0
+    Version 1.3.0.0
     """
 
     #special methods
@@ -1457,6 +1821,31 @@ class HContainer(CLUI_ABC):
         else:
             raise UT_TypeError(Width, int, SkipFrames = 1)
         self._Widgets = []
+
+    def __getitem__(self, Index: int) -> HWidget_ABC:
+        """
+        Special method to get access to a single widgets amongst added to this
+        containter.
+
+        Signature:
+            int -> HWidget_ABC
+        
+        Args:
+            Index: int, index of the stored widget to get access to
+        
+        Raises:
+            UT_TypeError: passed argument is not a integer
+            UT_IndexError: passed argument is an integer but outside of the
+                range with respect to the number of the stored widgets
+        
+        Version 1.0.0.0
+        """
+        Length = len(self._Widgets)
+        if not isinstance(Index, int):
+            raise UT_TypeError(Index, int, SkipFrames = 1)
+        if (not Length) or (Index > Length - 1) or (Index < - Length):
+            raise UT_IndexError(self.__class__.__name__, Index)
+        return self._Widgets[Index]
 
     #public API
 

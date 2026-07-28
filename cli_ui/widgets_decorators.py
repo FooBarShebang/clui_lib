@@ -4,8 +4,8 @@ Module clui_lib.widgets_decorators
 Helper classes to define and change the appearance of CLI UI widgets.
 """
 
-__version__= '1.0.0.0'
-__date__ = '24-07-2026'
+__version__= '1.1.0.0'
+__date__ = '28-07-2026'
 __status__ = 'Development'
 
 #imports
@@ -108,6 +108,54 @@ class BarEmptySimple:
     Foreground: ClassVar[Optional[int]] = None
     Background: ClassVar[Optional[int]] = None
 
+class ON_Coloured:
+    """
+    ON string with possible back- and foreground colour.
+    """
+    Symbol: ClassVar[str] = 'ON'
+    Foreground: ClassVar[Optional[int]] = 1
+    Background: ClassVar[Optional[int]] = 2
+
+class OFF_Simple:
+    """
+    OFF string with possible back- and foreground colour.
+    """
+    Symbol: ClassVar[str] = 'OFF'
+    Foreground: ClassVar[Optional[int]] = None
+    Background: ClassVar[Optional[int]] = None
+
+class X_Simple:
+    """
+    X symbol with possible back- and foreground colour.
+    """
+    Symbol: ClassVar[str] = 'X'
+    Foreground: ClassVar[Optional[int]] = None
+    Background: ClassVar[Optional[int]] = None
+
+class SpaceSimple:
+    """
+    Single whitespace symbol with possible back- and foreground colour.
+    """
+    Symbol: ClassVar[str] = ' '
+    Foreground: ClassVar[Optional[int]] = None
+    Background: ClassVar[Optional[int]] = None
+
+class AsterixSimple:
+    """
+    * symbol with possible back- and foreground colour.
+    """
+    Symbol: ClassVar[str] = '*'
+    Foreground: ClassVar[Optional[int]] = None
+    Background: ClassVar[Optional[int]] = None
+
+class ArrowSimple:
+    """
+    '->' string with possible back- and foreground colour.
+    """
+    Symbol: ClassVar[str] = '->'
+    Foreground: ClassVar[Optional[int]] = None
+    Background: ClassVar[Optional[int]] = None
+
 #coupled pairs
 
 class RoundEdgesSimple:
@@ -186,3 +234,35 @@ class ProgressBarDecoratorSimple:
     """
     Edges: ClassVar[type] = SquareEdgesSimple
     Bar: ClassVar[type] = BarDecoratorSimple
+
+class OnOffColouredButtonDecorator:
+    """
+    Complete set of definitions of the elements of On/Off button widget.
+    """
+    OnState: ClassVar[type] = ON_Coloured
+    OffState: ClassVar[type] = OFF_Simple
+    Edges: ClassVar[Optional[type]] = None
+
+class ArrowIndicatorDecorator:
+    """
+    Complete set of definitions of the elements of an arrow indicator widget.
+    """
+    OnState: ClassVar[type] = ArrowSimple
+    OffState: ClassVar[type] = SpaceSimple
+    Edges: ClassVar[Optional[type]] = None
+
+class RadioButtonDecorator:
+    """
+    Complete set of definitions of the elements of a radio-button widget.
+    """
+    OnState: ClassVar[type] = AsterixSimple
+    OffState: ClassVar[type] = SpaceSimple
+    Edges: ClassVar[Optional[type]] = RoundEdgesSimple
+
+class CheckButtonDecorator:
+    """
+    Complete set of definitions of the elements of a check-button (box) widget.
+    """
+    OnState: ClassVar[type] = X_Simple
+    OffState: ClassVar[type] = SpaceSimple
+    Edges: ClassVar[Optional[type]] = SquareEdgesSimple

@@ -1,7 +1,7 @@
 """
 Module clui_lib.Tests.DT008_Spinner
 
-Demonstration test for the module clui_lib.cli_ui.line_widgtes, specifically -
+Demonstration test for the module clui_lib.cli_ui.line_widgets, specifically -
 the class SpinnerIndicator.
 """
 
@@ -15,7 +15,6 @@ __status__ = 'Testing'
 
 import sys
 import os
-import os.path
 import time
 
 #+other libraries
