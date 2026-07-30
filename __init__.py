@@ -15,10 +15,10 @@ Packages:
 """
 
 __project__ ='Command Line User Interface Tools'
-__version_info__= (0, 4, 0)
+__version_info__= (0, 5, 0)
 __version_suffix__= '-dev1'
 __version__= ''.join(['.'.join(map(str, __version_info__)), __version_suffix__])
-__date__ = '28-07-2026'
+__date__ = '30-07-2026'
 __status__ = 'Development'
 __author__ = 'Anton Azarov'
 __maintainer__ = 'a.azarov@diagnoptics.com'

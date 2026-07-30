@@ -39,8 +39,8 @@ Classes:
         into a single line representation in the text console
 """
 
-__version__= '1.3.0.0'
-__date__ = '28-07-2026'
+__version__= '1.4.0.0'
+__date__ = '30-07-2026'
 __status__ = 'Development'
 
 #imports
@@ -76,6 +76,8 @@ from .widgets_decorators import SliderWidgetDecoratorSimple
 from .widgets_decorators import SpinnerSimple, ArrowIndicatorDecorator
 from .widgets_decorators import OnOffColouredButtonDecorator
 from .widgets_decorators import RadioButtonDecorator, CheckButtonDecorator
+
+from ..console.clear_screen import ClearScreen
 
 if os.name == 'posix':
     from ..console.xterm_colours import Colorize
@@ -924,12 +926,14 @@ class TextLabel(HWidget_ABC):
             None -> None
         update():
             None -> None
-        setValue(Value):
-            type A -> None
+        setValue(Value, **kwargs):
+            type A/, **kwargs/ -> None
         getStringValue():
             None -> str
+        setStyle(**kwargs):
+            /**kwargs/ -> None
     
-    Version 1.3.0.0
+    Version 1.5.0.0
     """
 
     #special methods
@@ -968,7 +972,7 @@ class TextLabel(HWidget_ABC):
                 values, OR integer value outside of 0..255 range is passed for
                 the background or foreground colour
 
-        Version 2.0.0.0
+        Version 2.1.0.0
         """
         if isinstance(Alignment, str):
             if Alignment.lower() in ['c', 'l', 'r']:
@@ -996,10 +1000,7 @@ class TextLabel(HWidget_ABC):
             self._SymTrunc = bool(SymTrunc)
         else:
             self._SymTrunc = None
-        if len(kwargs):
-            self._Settings = self._parseKwargs(**kwargs)
-        else:
-            self._Settings = None
+        self.setStyle(**kwargs)
     
     #public API
 
@@ -1077,13 +1078,10 @@ class TextLabel(HWidget_ABC):
             UT_ValueError: Integer value outside of 0..255 range is passed for
                 the background or foreground colour
         
-        Version 2.0.0.0
+        Version 2.1.0.0
         """
         self._Value = self._normalizeInput(str(Value))
-        if len(kwargs):
-            self._Settings = self._parseKwargs(**kwargs)
-        else:
-            self._Settings = None
+        self.setStyle(**kwargs)
     
     def getStringValue(self) -> str:
         """
@@ -1131,6 +1129,33 @@ class TextLabel(HWidget_ABC):
             Result = ColorizeFunc(Result, **self._Settings)
         Result = f'{LeftSpaces}{Result}{RightSpaces}'
         return Result
+
+    def setStyle(self, **kwargs) -> None:
+        """
+        Changes the style / text decorations. The text is unchanged. Does not
+        updates the on screen representation, use method update()!
+
+        Signature:
+            /**kwargs/ -> None
+        
+        Args:
+            **kwargs: (keyword) **dict(str -> int OR bool); text decorators,
+                allowed Foreground, Background (0..255), BOLD, ITALIC, FAINT,
+                UNDERLINE, DOUBLE, STRIKE, HIDE, INVERSE (bool)
+                
+        Raises:
+            UT_TypeError: Unrecognized keyword argument for text decoration is
+                passed, OR non-integer value is passed for the background or
+                foreground colour
+            UT_ValueError: Integer value outside of 0..255 range is passed for
+                the background or foreground colour
+                
+        Version 1.0.0.0
+        """
+        if len(kwargs):
+            self._Settings = self._parseKwargs(**kwargs)
+        else:
+            self._Settings = None
 
 class BarControl_ABC(HWidget_ABC):
     """
@@ -1624,16 +1649,18 @@ class TextLabelVW(TextLabel, ScalableWidth):
             None -> None
         update():
             None -> None
-        setValue(Value):
-            type A -> None
+        setValue(Value, **kwargs):
+            type A/, **kwargs/ -> None
         setWidth(Width):
             int >= MinWidth -> None
         getStringValue():
             None -> str
         optimizeWidth():
             None -> None
+        setStyle(**kwargs):
+            /**kwargs/ -> None
     
-    Version 1.1.0.0
+    Version 1.3.0.0
     """
 
     #deafult min width as class variable
@@ -1704,7 +1731,7 @@ class TextLabelVW(TextLabel, ScalableWidth):
         len(str(Value)) + 1.
 
         Signature:
-            type A -> None
+            type A/, **kwargs/ -> None
         
         Args:
             Value: type A; any value to store as a string
@@ -1719,7 +1746,7 @@ class TextLabelVW(TextLabel, ScalableWidth):
             UT_ValueError: Integer value outside of 0..255 range is passed for
                 the background or foreground colour
         
-        Version 2.0.0.0
+        Version 2.1.0.0
         """
         ScreenWidth = GetScreenWidth()
         if not (self._Value is None):
@@ -1727,10 +1754,7 @@ class TextLabelVW(TextLabel, ScalableWidth):
         _Value = self._normalizeInput(str(Value))
         self._Value = _Value
         self._Width = min(self.Width, ScreenWidth)
-        if len(kwargs):
-            self._Settings = self._parseKwargs(**kwargs)
-        else:
-            self._Settings = None
+        self.setStyle(**kwargs)
         
     def optimizeWidth(self) -> None:
         """
@@ -1751,7 +1775,8 @@ class TextLabelVW(TextLabel, ScalableWidth):
 class HContainer(CLUI_ABC):
     """
     Widgets container class to stack multiple single line widgets into a single
-    line string representation.
+    line string representation. Widgets stacked inside can be (read-) accessed
+    using integer index notation.
 
     Initially it is created empty but of the finite width (in characters). The
     widgets are supposed to be added to it after instantiation. The sum of the
@@ -1992,3 +2017,220 @@ class HContainer(CLUI_ABC):
                                             f'available {Remains} characters'])
             raise UT_Exception(ErrorMessage, SkipFrames = 1)
         self._Widgets.append(Widget)
+
+
+class VContainer(CLUI_ABC):
+    """
+    Widgets container class to stack multiple single line widgets or horizontal
+    widgets containers into a single multi-line widget. Widgetsts stacked inside
+    can be (read-) accessed using integer index notation.
+
+    It can be created either empty or with some widgets already stacked. More
+    widgets can be added at any moment. The height (number of lines occupied) is
+    defined by the number of the added widgets. The width (in characters) is the
+    width of the broadest of the stacked widgets.
+
+    The (effective) width of the entire container can be changed, in which case
+    all scallable widgets and containers are set to this width. Note that this
+    width cannot be less than the maximum value of the minimum width for all
+    stacked widgets and containers, or exceed the width of the screen.
+
+    Sub-classes CLUI_ABC.
+
+    Attributes:
+        MinWidth: (read-only property) int > 0; minimum width required to fit
+            all the stacked widgets, the actual width of the container cannot
+            be set below this value
+        Width: (read-only property) int >= 0; current width (in characters) of
+            the container although the stacked widgets can occupy less
+            characters in their respective lines
+        Height: (read-only property) int >= 0: height of the container, i.e.
+            how many lines it occupies
+    
+    Methods:
+        clear():
+            None -> None
+        show():
+            None -> None
+        update():
+            None -> None
+        addWidget(Widget):
+            HWidget_ABC OR HContainer-> None
+        getStringValue():
+            None -> str
+        setWidth(Width):
+            int > 0 -> None
+    
+    Version 1.0.0.0
+    """
+
+    #special methods
+
+    def __init__(self, *args) -> None:
+        """
+        Initialization method. Any number of instances of any sub-classes of
+        HWidget_ABC or HContaier classes can be passed as optionial positional
+        arguments, in which case they will be added to the container
+        immediately.
+
+        Signature:
+            /*seq(HWidget_ABC OR HContainer)/ -> None
+
+        Raises:
+            UT_TypeError: any of the passed arguments is not an instance of a
+             compatible sublcass
+
+        Version 1.0.0.0
+        """
+        self._Widgets = []
+        if len(args):
+            for Widget in args:
+                self.addWidget(Widget)
+
+    def __getitem__(self, Index: int) -> Union[HWidget_ABC, HContainer]:
+        """
+        Special method to get access to a single widgets amongst added to this
+        containter.
+        
+        Signature:
+            int -> HWidget_ABC OR HContainer
+        
+        Args:
+            Index: int, index of the stored widget to get access to
+        
+        Raises:
+            UT_TypeError: passed argument is not a integer
+            UT_IndexError: passed argument is an integer but outside of the
+                range with respect to the number of the stored widgets
+        
+        Version 1.0.0.0
+        """
+        Length = len(self._Widgets)
+        if not isinstance(Index, int):
+            raise UT_TypeError(Index, int, SkipFrames = 1)
+        if (not Length) or (Index > Length - 1) or (Index < - Length):
+            raise UT_IndexError(self.__class__.__name__, Index)
+        return self._Widgets[Index]
+
+    #public API - properties
+
+    @property
+    def Width(self) -> int:
+        """
+        Read-only property (getter) to get the effective width of the container,
+        which is the width of the broadest stacked widget / horizontal
+        container.
+
+        Signature:
+            None -> int >= 0
+        
+        Version 1.0.0.0
+        """
+        if self._Widgets:
+            Result = max(Widget.Width for Widget in self._Widgets)
+        else:
+            Result = 0
+        return Result
+
+    @property
+    def MinWidth(self) -> int:
+        """
+        Read-only property (getter) to get the minimal possible width of the
+        container.
+
+        Signature:
+            None -> int >= 0
+        
+        Version 1.0.0.0
+        """
+        Result = 0
+        for Widget in self._Widgets:
+            if hasattr(Widget, 'MinWidth'):
+                Result = max(Result, Widget.MinWidth)
+            else:
+                Result = max(Result, Widget.Width)
+        return Result
+
+    @property
+    def Height(self) -> int:
+        """
+        Read-only property (getter) to get the height of the container, i.e.
+        how many lines it occupies.
+
+        Signature:
+            None -> int >= 0
+        
+        Version 1.0.0.0
+        """
+        return len(self._Widgets)
+
+    #public methods
+
+    def addWidget(self, Widget: Any) -> None:
+        """
+        Adds another simple (single line) widget or horizontal container.
+
+        Signature:
+            type A-> None
+        
+        Args:
+            Widget: type A; line widget to be added, instance of any compatible
+                class, which has attribute Width
+        
+        Raises:
+            UT_TypeError: passed argument is not an instance of a compatible
+                sublcass
+        
+        Version 1.0.0.0
+        """
+        if not (hasattr(Widget, 'Width') and hasattr(Widget, 'getStringValue')):
+            Error =  UT_TypeError(Widget, CLUI_ABC, SkipFrames= 1)
+            Error.appendMessage('or a compatible class')
+            raise Error
+        self._Widgets.append(Widget)
+
+    def clear(self) -> None:
+        """
+        Clears (removes) the on-screen representation of the (multi-line) widget
+        by clearing the entire console screen.
+
+        Signature:
+            None -> None
+        
+        Version 1.0.0.0
+        """
+        ClearScreen()
+
+    def getStringValue(self) -> str:
+        """
+        Creates and returns a single (multi-line) string representation of all
+        stacked widgets.
+
+        Signature:
+            None -> str
+        
+        Version 1.0.0.0
+        """
+        return '\n'.join(Widget.getStringValue() for Widget in self._Widgets)
+
+    def setWidth(self, Width: int) -> None:
+        """
+        Sets the width of all stacked scalable line widgets or containers to
+        the passed value. Note, that the value must not exceed the width of the
+        screen, and it cannot be less than the miminal width of the container -
+        see MinWidth attribute; otherwise the width will not be adjusted.
+
+        The on-screen representation of the widget is updated automatically even
+        if its width has not been changed.
+
+        Signature:
+            int > 0
+        
+        Version 1.0.0.0
+        """
+        ScrW = GetScreenWidth()
+        if Width >= self.MinWidth and Width != self.Width and Width <= ScrW:
+            for Widget in self._Widgets:
+                if hasattr(Widget, 'setWidth'):
+                    Widget.setWidth(Width)
+        self.update()

@@ -8,8 +8,8 @@ Also demonstrates a possible implementation of check-boxes and radio-buttons
 groups as command line widgets.
 """
 
-__version__= '1.0.0.0'
-__date__ = '28-07-2026'
+__version__= '1.1.0.0'
+__date__ = '30-07-2026'
 __status__ = 'Testing'
 
 #imports
@@ -123,10 +123,8 @@ if __name__ == '__main__':
                     elif Key == 'KeyRIGHT' and Position < 2:
                         Position += 1
                     for Index in range(3):
-                        Value = Widget[2 * Index + 1].Value
-                        Widget[2 * Index + 1].setValue(Value, BOLD = False)
-                    Value = Widget[2 * Position + 1].Value
-                    Widget[2 * Position + 1].setValue(Value, BOLD = True)
+                        Widget[2 * Index + 1].setStyle(BOLD = False)
+                    Widget[2 * Position + 1].setStyle(BOLD = True)
                     Widget.update()
                 elif Key == 'KeyUP':
                     for Index in range(3):
@@ -165,10 +163,8 @@ if __name__ == '__main__':
                     elif Key == 'KeyRIGHT' and Position < 2:
                         Position += 1
                     for Index in range(3):
-                        Value = Widget[2 * Index + 1].Value
-                        Widget[2 * Index + 1].setValue(Value, BOLD = False)
-                    Value = Widget[2 * Position + 1].Value
-                    Widget[2 * Position + 1].setValue(Value, BOLD = True)
+                        Widget[2 * Index + 1].setStyle(BOLD = False)
+                    Widget[2 * Position + 1].setStyle(BOLD = True)
                     Widget.update()
                 elif Key == 'KeyUP':
                     Widget[2 * Position].toggleState()

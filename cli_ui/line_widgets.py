@@ -10,8 +10,8 @@ Classes:
     SpinnerIndicator
 """
 
-__version__= '1.3.0.0'
-__date__ = '24-07-2026'
+__version__= '1.4.0.0'
+__date__ = '30-07-2026'
 __status__ = 'Development'
 
 #imports
@@ -57,6 +57,8 @@ class ProgressBarIndicator:
         Value: (read-only property) int >= 0; the current value of the internal
             counter
         Width: (read-only property) int > 0; the current width of the widget
+        MinWidth: (read-only property) int > 0; the minimal possible width
+            of the widget
         IsActive: (read-only property) bool; if the widget is running, i.e.
             creating the visual output
     
@@ -82,7 +84,7 @@ class ProgressBarIndicator:
         setStyle(Style):
             type type A -> None
     
-    Version 1.1.0.0
+    Version 1.2.0.0
     """
 
     #special methods
@@ -200,6 +202,18 @@ class ProgressBarIndicator:
         Version 1.0.0.0
         """
         return self._Indicator.Width
+
+    @property
+    def MinWidth(self) -> int:
+        """
+        Read-only property to access the minimal possible width of the widget.
+    
+        Signature:
+            None -> int > 0
+        
+        Version 1.0.0.0
+        """
+        return self._Indicator.MinWidth
     
     @property
     def IsActive(self) -> bool:
@@ -484,6 +498,8 @@ class SliderControlIndicator:
         Value: (read-only property) int >= 0; the current value of the internal
             counter
         Width: (read-only property) int > 0; the current width of the widget
+        MinWidth: (read-only property) int > 0; the minimal possible width of
+            the widget
     
     Methods:
         inc():
@@ -504,8 +520,10 @@ class SliderControlIndicator:
             type type A -> None
         update():
             None -> None
+        setLabelStyle(**kwargs):
+            /**kwargs/ -> None
     
-    Version 1.0.0.0
+    Version 1.1.0.0
     """
 
     #special methods
@@ -594,6 +612,18 @@ class SliderControlIndicator:
         Version 2.0.0.0
         """
         return self._Indicator.Width
+
+    @property
+    def MinWidth(self) -> int:
+        """
+        Read-only property to access the current width of the widget.
+    
+        Signature:
+            None -> int > 0
+        
+        Version 1.0.0.0
+        """
+        return self._Indicator.MinWidth
     
     @property
     def Value(self) -> int:
@@ -786,6 +816,30 @@ class SliderControlIndicator:
         self.getStringValue() #forces the current values into sub-widgets
         self._Indicator.update()
 
+    def setLabelStyle(self, **kwargs) -> None:
+        """
+        Changes the style / text decorators of the label of the slider indicator
+        widget.
+
+        Signature:
+            /**kwargs/ -> None
+
+        Args:
+            **kwargs: (keyword) **dict(str -> int OR bool); text decorators,
+                allowed Foreground, Background (0..255), BOLD, ITALIC, FAINT,
+                UNDERLINE, DOUBLE, STRIKE, HIDE, INVERSE (bool)
+        
+        Raises:
+            UT_TypeError: unrecognized keyword argument for text decoration is
+                passed, OR non-integer value is passed for the background or
+                foreground colour
+            UT_ValueError: integer value outside of 0..255 range is passed for
+                the background or foreground colour
+        
+        Version 1.0.0.0
+        """
+        self._Indicator[0].setStyle(**kwargs)
+
 class SpinnerIndicator:
     """
     Command line widget combining Spinner and a variable width text label, which
@@ -793,6 +847,8 @@ class SpinnerIndicator:
     
     Attributes:
         Width: (read-only property) int > 1; the current width of the widget
+        MinWidth: (read-only property) int > 1; minimal possible width of the
+            widget
         
     Methods:
         next():
@@ -802,7 +858,7 @@ class SpinnerIndicator:
         update():
             None -> None
         
-    Version 1.0.0.0
+    Version 1.1.0.0
     """
 
     #special methods
@@ -833,6 +889,33 @@ class SpinnerIndicator:
         self._Indicator.addWidget(self._Spinner)
         self._Indicator.addWidget(self._Label)
         self._Indicator.show()
+
+    #properties
+
+    @property
+    def Width(self) -> int:
+        """
+        Read-only property to access the current width of the widget.
+
+        Signature:
+            None -> int > 1
+        
+        Version 1.0.0.0
+        """
+        return self._Indicator.Width
+
+    @property
+    def MinWidth(self) -> int:
+        """
+        Read-only property to access the current minimal possible width of the
+        widget.
+    
+        Signature:
+            None -> int > 1
+        
+        Version 1.0.0.0
+        """
+        return self._Indicator.MinWidth
 
     #public methods
 

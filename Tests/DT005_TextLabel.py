@@ -6,8 +6,8 @@ the fixed and variable width Text Labels
 
 """
 
-__version__= '2.0.0.0'
-__date__ = '22-07-2026'
+__version__= '3.0.0.0'
+__date__ = '30-07-2026'
 __status__ = 'Testing'
 
 #imports
@@ -54,20 +54,20 @@ if __name__ == '__main__':
     objTest.update()
     time.sleep(SLEEP_TIME)
     #change label and update - original text with foreground colour
-    objTest.setValue(Label, Foreground = 4)
+    objTest.setStyle(Foreground = 4)
     objTest.update()
     time.sleep(SLEEP_TIME)
     #change label and update - original text with bold italic font
-    objTest.setValue(Label, BOLD = True, ITALIC = True)
+    objTest.setStyle(BOLD = True, ITALIC = True)
     objTest.update()
     time.sleep(SLEEP_TIME)
     #change label and update - original text with normal font
-    objTest.setValue(Label, BOLD = False, ITALIC = False)
+    objTest.setStyle(BOLD = False, ITALIC = False)
     objTest.update()
     time.sleep(SLEEP_TIME)
     #change label and update - original text with multiple decorations
     #+ ITALIC should not be applied
-    objTest.setValue(Label, BOLD = True, ITALIC = False,
+    objTest.setStyle(BOLD = True, ITALIC = False,
                             Foreground = 4, Background = 3, STRIKE = True)
     objTest.update()
     time.sleep(SLEEP_TIME)
@@ -104,26 +104,26 @@ if __name__ == '__main__':
     objTest.update()
     time.sleep(SLEEP_TIME)
     #change label and update - original text with foreground colour
-    objTest.setValue(Label, Foreground = 4)
+    objTest.setStyle(Foreground = 4)
     #no need for optimizeWidth() since the length of the text is the same
     objTest.update()
     time.sleep(SLEEP_TIME)
     #change label and update - original text with bold italic font
-    objTest.setValue(Label, BOLD = True, ITALIC = True)
+    objTest.setStyle(BOLD = True, ITALIC = True)
     objTest.update()
     time.sleep(SLEEP_TIME)
     #change label and update - original text with normal font
-    objTest.setValue(Label, BOLD = False, ITALIC = False)
+    objTest.setStyle(BOLD = False, ITALIC = False)
     objTest.update()
     time.sleep(SLEEP_TIME)
     #change label and update - original text with multiple decorations
     #+ ITALIC should not be applied
-    objTest.setValue(Label, BOLD = True, ITALIC = False,
+    objTest.setStyle(BOLD = True, ITALIC = False,
                             Foreground = 4, Background = 3, STRIKE = True)
     objTest.update()
     time.sleep(SLEEP_TIME)
     #change label and update - original text with normal font
-    objTest.setValue(Label)
+    objTest.setStyle()
     objTest.update()
     time.sleep(SLEEP_TIME)
     objTest.clear()
